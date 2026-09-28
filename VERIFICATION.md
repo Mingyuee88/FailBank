@@ -58,8 +58,18 @@ batch 32, λ_q = 0, base checkpoint π0.5), original trainer against `failbank-t
 
 ## Minimal example
 
-Pending at the time of writing: `examples/minimal/run_minimal.sh` run unmodified against the
-clean VLA-Arena clone.
+`examples/minimal/run_minimal.sh`, run as shipped against the clean VLA-Arena clone (package on
+`PYTHONPATH`, no vlsa-aegis, no VLM service), completed: six observe-only episodes collected and
+committed; derived records, a one-round bank and the gated training set built (198 training
+records, offset 0 held out); the guarded update validated every 100 steps and kept step 100 (flow
+ratio 1.068, drift 0.0031), while steps 200-800 were rejected (flow ratio 1.20-1.28); the adapter
+was folded, and base and updated policy were evaluated on the held-out offset (both fail that
+episode: official CC 225 and 228). One episode illustrates the pipeline; it says nothing about
+the method.
+
+The optional AEGIS extra was checked at import level only (the teacher resolves through
+`--teacher failbank_aegis:VlsaAegisTeacher` against a patched vlsa-aegis checkout); a full cell
+needs a running GLM-4.5V endpoint.
 
 ## What changed on purpose
 

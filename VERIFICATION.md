@@ -43,9 +43,18 @@ barrier and active-constraint count.
 
 ## Stage 4
 
-Pending at the time of writing: the paper's `ncs1` adapter (two-round bank, 6,535 gated records,
-data seed 1, 800 steps, batch 32, λ_q = 0) retrained with the original trainer and with
-`failbank-train`, compared with each other and with the archived guard metrics.
+Recipe of the paper's `ncs1` adapter (two-round bank, 6,535 gated training records, data seed 1,
+batch 32, λ_q = 0, base checkpoint π0.5), original trainer against `failbank-train`, same host.
+
+* 100 steps with `XLA_FLAGS=--xla_gpu_deterministic_ops=true`, two runs per trainer: all four runs
+  give identical reference losses, final weighted loss, flow ratio (0.9732850805103668) and
+  first-action drift (0.006998802535235882), to every printed digit.
+* 800 steps (the paper's setting) without that flag: not bit-identical, and not for the original
+  trainer either. Re-running the original trainer does not reproduce its own archived metrics; even
+  the reference losses computed before any update differ (0.009541 vs 0.009482), which isolates
+  the cause to nondeterministic GPU kernels. The release trainer falls inside that spread:
+  flow ratio 1.00774 (release) vs 1.00845 (original, rerun) vs 1.00729 (archived), first-action
+  drift 0.00954 vs 0.00956 vs 0.00958; all three accepted at step 800.
 
 ## Minimal example
 

@@ -1,426 +1,467 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>FailBank</title>
-<meta name="description" content="FailBank turns observe-only shield feedback into persistent policy improvement for vision-language-action models.">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=Source+Serif+4:opsz,wght@8..60,500;8..60,600&display=swap">
-<style>
-:root{
-  --paper:#F4F6F9; --surface:#FFFFFF; --ink:#141B24; --ink-2:#4B5665; --ink-3:#6B7684;
-  --rule:#DCE2E9; --soft:#E8EEF6; --plate:#FFFFFF;
-  --fb:#2A69AC; --fb-soft:#DCE8F6; --aegis:#C9722A; --aegis-soft:#F6E6D6; --base:#76828F;
-  --good:#2F7D55;
-  --serif:"Source Serif 4", "Source Serif Pro", Georgia, "Times New Roman", serif;
-  --sans:"IBM Plex Sans", "Helvetica Neue", Arial, system-ui, sans-serif;
-  --mono:"IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  color-scheme: light;
-}
-@media (prefers-color-scheme: dark){
-  :root:not([data-theme="light"]){
-    --paper:#0D1218; --surface:#141B24; --ink:#E5EAF0; --ink-2:#A6B1BE; --ink-3:#8793A1;
-    --rule:#26303C; --soft:#172230; --plate:#F3F5F8;
-    --fb:#72A9E4; --fb-soft:#16283D; --aegis:#EDA15E; --aegis-soft:#33241A; --base:#9AA5B2;
-    --good:#6CC196; color-scheme: dark;
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- Primary Meta Tags -->
+  <meta name="title" content="FailBank: Learning from Runtime Feedback through Failure-Bank Self-Evolution for Vision-Language-Action Models">
+  <meta name="description" content="FailBank turns observe-only CBF shield feedback into guarded LoRA updates, improving VLA task success and policy-induced cost on VLA-Arena for pi0.5 and pi0.">
+  <meta name="keywords" content="vision-language-action, VLA, robot learning, runtime shield, control barrier function, self-evolution, LoRA, VLA-Arena, pi0.5, pi0">
+  <meta name="author" content="Mingyue Cui, Zheyuan Liu, Yihan Zhu, Zheyuan Zhang">
+  <meta name="robots" content="index, follow">
+  <meta name="language" content="English">
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="University of Notre Dame">
+  <meta property="og:title" content="FailBank: Learning from Runtime Feedback through Failure-Bank Self-Evolution for Vision-Language-Action Models">
+  <meta property="og:description" content="FailBank turns observe-only CBF shield feedback into guarded LoRA updates, improving VLA task success and policy-induced cost on VLA-Arena for pi0.5 and pi0.">
+  <!-- TODO: set og:url and og:image to the published page once the GitHub Pages URL is known -->
+  <meta property="og:image" content="static/images/pipeline.png">
+  <meta property="og:image:alt" content="The four-stage FailBank loop">
+  <meta property="article:author" content="Mingyue Cui">
+  <meta property="article:section" content="Research">
+
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="FailBank: Failure-Bank Self-Evolution for Vision-Language-Action Models">
+  <meta name="twitter:description" content="Observe-only CBF feedback turned into guarded LoRA updates for VLA policies.">
+  <meta name="twitter:image" content="static/images/pipeline.png">
+
+  <!-- Academic -->
+  <meta name="citation_title" content="Learning from Runtime Feedback through Failure-Bank Self-Evolution for Vision-Language-Action Models">
+  <meta name="citation_author" content="Cui, Mingyue">
+  <meta name="citation_author" content="Liu, Zheyuan">
+  <meta name="citation_author" content="Zhu, Yihan">
+  <meta name="citation_author" content="Zhang, Zheyuan">
+  <meta name="citation_publication_date" content="2026">
+
+  <meta name="theme-color" content="#2373A6">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net">
+
+  <title>FailBank: Failure-Bank Self-Evolution for Vision-Language-Action Models</title>
+
+  <link rel="icon" type="image/x-icon" href="static/images/favicon.ico">
+  <link rel="apple-touch-icon" href="static/images/favicon.ico">
+
+  <link rel="stylesheet" href="static/css/bulma.min.css">
+  <link rel="stylesheet" href="static/css/index.css">
+  <link rel="stylesheet" href="static/css/bulma-carousel.min.css">
+  <link rel="stylesheet" href="static/css/bulma-slider.min.css">
+  <link rel="stylesheet" href="static/css/fontawesome.all.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <script defer src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <script defer src="static/js/fontawesome.all.min.js"></script>
+  <script defer src="static/js/bulma-carousel.min.js"></script>
+  <script defer src="static/js/bulma-slider.min.js"></script>
+  <script defer src="static/js/index.js"></script>
+
+  <!-- Page-specific additions on top of the template: paper palette (method figure) and figures/tables -->
+  <style>
+    :root {
+      --primary-color: #2373A6;           /* FailBank blue in the method figure */
+      --primary-hover: #1C5E88;
+      --accent-color: #368773;            /* teal in the method figure */
+      --gradient-accent: linear-gradient(135deg, #2373A6 0%, #368773 100%);
+      --fb: #2373A6;
+      --aegis: #DA7C3C;
+    }
+    .section-figure { margin: 0 auto; }
+    .section-figure img { display: block; width: 100%; height: auto; }
+    .section-figure.is-narrow { max-width: 620px; }
+    .figure-caption { font-size: 0.95rem; line-height: 1.6; color: var(--text-secondary); margin-top: 1rem; text-align: justify; }
+    .figure-caption b { color: var(--text-primary); }
+    .block-gap { margin-top: 2.5rem; }
+    .results-table { font-size: 0.86rem; font-variant-numeric: tabular-nums; width: 100%; min-width: 760px; table-layout: fixed; }
+    .results-table col.c-level { width: 6%; }
+    .results-table col.c-task { width: 14%; }
+    .results-table col.c-num { width: 8.8888%; }
+    .results-table th, .results-table td { text-align: center !important; vertical-align: middle !important; white-space: nowrap; padding: 0.35em 0.55em !important; }
+    .results-table thead th { font-weight: 600; }
+    .results-table .grp-start { border-left: 2px solid #dbdbdb !important; }
+    .results-table .fb-head { color: var(--fb); }
+    .results-table .aegis-head { color: var(--aegis); }
+    .results-table td.best { font-weight: 700; color: var(--text-primary); }
+    .results-table tr.brs-row td { background: var(--background-accent); font-weight: 600; }
+    .results-table .collect-tag { display: block; width: max-content; margin: 0.15em auto 0; font-size: 0.66rem; line-height: 1.3; color: var(--fb); border: 1px solid var(--fb); border-radius: 999px; padding: 0 0.4em; margin-left: 0.3em; }
+    .table-title { font-weight: 700; font-size: 1.05rem; margin: 0.5rem 0 0.75rem; text-align: center; }
+    .stat-row { display: flex; flex-wrap: wrap; gap: 1rem; justify-content: center; margin-bottom: 2rem; }
+    .stat { flex: 1 1 200px; max-width: 230px; text-align: center; background: var(--background-secondary); border: 1px solid var(--border-color); border-radius: var(--border-radius); padding: 1rem 0.75rem; }
+    .stat .value { font-size: 1.6rem; font-weight: 700; color: var(--fb); line-height: 1.2; }
+    .stat .label { font-size: 0.85rem; color: var(--text-secondary); margin-top: 0.3rem; }
+    .stages .column p { font-size: 0.97rem; color: var(--text-secondary); line-height: 1.65; }
+    .stages .stage-name { font-weight: 700; color: var(--text-primary); margin-bottom: 0.4rem; }
+    .stages .stage-num { color: var(--fb); font-weight: 700; margin-right: 0.35em; }
+    .contact-line { font-size: 1rem; color: var(--text-secondary); margin-top: 0.5rem; }
+    pre.shell { text-align: left; }
+    /* Bulma's .hero is a flex column and .container has auto margins, so without this a wide
+       table sizes the container to its own width and is clipped on phones */
+    .hero > .container { width: 100%; }
+    /* line the teaser up with the other figures (the template pads its hero-body) */
+    @media screen and (min-width: 1024px) { .teaser .hero-body { padding-left: 0; padding-right: 0; } }
+  </style>
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "ScholarlyArticle",
+    "headline": "Learning from Runtime Feedback through Failure-Bank Self-Evolution for Vision-Language-Action Models",
+    "author": [
+      {"@type": "Person", "name": "Mingyue Cui", "affiliation": {"@type": "Organization", "name": "University of Notre Dame"}},
+      {"@type": "Person", "name": "Zheyuan Liu", "affiliation": {"@type": "Organization", "name": "University of Notre Dame"}},
+      {"@type": "Person", "name": "Yihan Zhu", "affiliation": {"@type": "Organization", "name": "University of Notre Dame"}},
+      {"@type": "Person", "name": "Zheyuan Zhang", "affiliation": {"@type": "Organization", "name": "University of Notre Dame"}}
+    ],
+    "datePublished": "2026",
+    "keywords": ["vision-language-action", "runtime shield", "control barrier function", "self-evolution", "LoRA"],
+    "isAccessibleForFree": true
   }
-}
-:root[data-theme="dark"]{
-  --paper:#0D1218; --surface:#141B24; --ink:#E5EAF0; --ink-2:#A6B1BE; --ink-3:#8793A1;
-  --rule:#26303C; --soft:#172230; --plate:#F3F5F8;
-  --fb:#72A9E4; --fb-soft:#16283D; --aegis:#EDA15E; --aegis-soft:#33241A; --base:#9AA5B2;
-  --good:#6CC196; color-scheme: dark;
-}
-*{box-sizing:border-box}
-html{-webkit-text-size-adjust:100%}
-body{margin:0;background:var(--paper);color:var(--ink);font:400 16px/1.62 var(--sans);}
-.wrap{max-width:1040px;margin:0 auto;padding-inline:clamp(16px,4vw,40px);padding-block:0 72px;display:flex;flex-direction:column;gap:64px}
-a{color:var(--fb);text-underline-offset:3px}
-a:focus-visible,button:focus-visible{outline:2px solid var(--fb);outline-offset:3px;border-radius:4px}
-h1,h2,h3{font-family:var(--serif);font-weight:600;text-wrap:balance;margin:0;color:var(--ink)}
-h2{font-size:clamp(1.5rem,2.6vw,1.9rem);line-height:1.2}
-h3{font-size:1.12rem;line-height:1.3}
-p{margin:0}
-.prose{max-width:68ch;display:flex;flex-direction:column;gap:14px;color:var(--ink-2)}
-.prose strong{color:var(--ink);font-weight:600}
-.label{font:500 .74rem/1 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
-section{display:flex;flex-direction:column;gap:22px}
-.sec-head{display:flex;flex-direction:column;gap:10px}
-
-/* header */
-header.hero{padding-block:clamp(40px,7vw,80px) 0;display:flex;flex-direction:column;gap:22px}
-.hero h1{font-size:clamp(1.9rem,4.4vw,3.05rem);line-height:1.12;letter-spacing:-.01em;max-width:24ch}
-.hero .name{font:600 clamp(1rem,1.6vw,1.1rem)/1 var(--mono);color:var(--fb);letter-spacing:.02em}
-.authors{color:var(--ink-2);font-size:1rem}
-.authors .tba{border-bottom:1px dashed var(--ink-3)}
-.links{display:flex;flex-wrap:wrap;gap:10px}
-.btn{display:inline-flex;align-items:center;gap:8px;padding:9px 16px;border-radius:999px;border:1px solid var(--rule);background:var(--surface);color:var(--ink);font:500 .92rem/1 var(--sans);text-decoration:none}
-.btn.primary{background:var(--ink);color:var(--paper);border-color:var(--ink)}
-.btn.pending{color:var(--ink-3);cursor:default}
-.btn small{font:400 .72rem/1 var(--mono);color:var(--ink-3)}
-
-/* figures */
-figure{margin:0;display:flex;flex-direction:column;gap:12px}
-.plate{background:var(--plate);border:1px solid var(--rule);border-radius:10px;padding:clamp(8px,1.6vw,18px)}
-.plate img{display:block;width:100%;height:auto;max-width:100%}
-figcaption{font-size:.9rem;line-height:1.55;color:var(--ink-3);max-width:80ch}
-figcaption b{color:var(--ink-2);font-weight:600}
-
-/* tl;dr */
-.tldr{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px}
-.tldr > div{border-top:2px solid var(--rule);padding-top:14px;display:flex;flex-direction:column;gap:6px}
-.tldr > div:first-child{border-top-color:var(--fb)}
-.tldr h3{font-size:1.02rem}
-.tldr p{color:var(--ink-2);font-size:.95rem}
-
-/* seam line */
-.seam{font:400 .9rem/1.6 var(--mono);background:var(--surface);border:1px solid var(--rule);border-radius:8px;padding:14px 16px;overflow-x:auto;white-space:pre;color:var(--ink-2)}
-.seam .k{color:var(--fb)}
-.seam .c{color:var(--ink-3)}
-
-/* stages */
-.stages{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1px;background:var(--rule);border:1px solid var(--rule);border-radius:10px;overflow:hidden}
-.stage{background:var(--surface);padding:18px 18px 20px;display:flex;flex-direction:column;gap:8px}
-.stage .num{font:500 .78rem/1 var(--mono);color:var(--fb)}
-.stage p{font-size:.93rem;color:var(--ink-2)}
-.stage code{font:400 .82rem var(--mono);color:var(--ink)}
-
-/* results summary */
-.toggle{display:inline-flex;border:1px solid var(--rule);border-radius:999px;padding:3px;background:var(--surface);gap:2px;align-self:flex-start}
-.toggle button{font:500 .9rem/1 var(--sans);border:0;background:transparent;color:var(--ink-2);padding:8px 16px;border-radius:999px;cursor:pointer}
-.toggle button[aria-selected="true"]{background:var(--ink);color:var(--paper)}
-.summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
-.card{background:var(--surface);border:1px solid var(--rule);border-radius:10px;padding:16px 18px;display:flex;flex-direction:column;gap:12px}
-.card.fb{border-color:var(--fb);box-shadow:inset 0 3px 0 var(--fb)}
-.card .who{display:flex;align-items:center;gap:8px;font:600 .95rem/1 var(--sans)}
-.dot{width:10px;height:10px;border-radius:50%;flex:none}
-.metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
-.metric{display:flex;flex-direction:column;gap:4px}
-.metric .v{font:500 1.35rem/1.1 var(--mono);font-variant-numeric:tabular-nums;color:var(--ink)}
-.metric .n{font:400 .72rem/1.2 var(--mono);color:var(--ink-3);letter-spacing:.03em}
-.note{font-size:.88rem;color:var(--ink-3);max-width:80ch}
-
-/* table */
-.tablebox{overflow-x:auto;border:1px solid var(--rule);border-radius:10px;background:var(--surface)}
-table{border-collapse:collapse;width:100%;min-width:760px;font-size:.88rem;font-variant-numeric:tabular-nums}
-th,td{padding:8px 10px;text-align:right;white-space:nowrap;border-bottom:1px solid var(--rule)}
-th{font:500 .74rem/1.3 var(--mono);color:var(--ink-3);letter-spacing:.03em;text-transform:uppercase}
-thead tr:first-child th{font:600 .82rem/1 var(--sans);text-transform:none;letter-spacing:0;color:var(--ink);padding-top:12px}
-td.l,th.l{text-align:left}
-td{font-family:var(--mono);color:var(--ink-2)}
-td.task{font-family:var(--sans);color:var(--ink)}
-td.best{color:var(--ink);font-weight:600}
-td.best.fbcol{color:var(--fb)}
-.grp{border-left:1px solid var(--rule)}
-th.fbhead{color:var(--fb)}
-th.aegishead{color:var(--aegis)}
-tbody tr.lvl td{border-top:2px solid var(--rule)}
-tr.brs td{background:var(--soft);font-weight:500}
-.tag{display:inline-block;margin-left:6px;font:500 .66rem/1 var(--mono);letter-spacing:.04em;text-transform:uppercase;color:var(--fb);border:1px solid var(--fb);border-radius:999px;padding:3px 6px;vertical-align:1px}
-
-/* two-column */
-.split{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:28px;align-items:start}
-.formula{font:400 .95rem/1.7 var(--mono);background:var(--surface);border:1px solid var(--rule);border-radius:8px;padding:14px 16px;overflow-x:auto;white-space:nowrap;color:var(--ink)}
-ul.plain{margin:0;padding-left:1.1em;display:flex;flex-direction:column;gap:8px;color:var(--ink-2)}
-ul.plain li::marker{color:var(--ink-3)}
-
-/* code */
-pre.code{margin:0;font:400 .84rem/1.6 var(--mono);background:var(--surface);border:1px solid var(--rule);border-radius:8px;padding:14px 16px;overflow-x:auto;color:var(--ink)}
-pre.code .c{color:var(--ink-3)}
-.bib{position:relative}
-.copy{position:absolute;top:10px;right:10px;font:500 .78rem/1 var(--sans);padding:7px 11px;border-radius:6px;border:1px solid var(--rule);background:var(--paper);color:var(--ink-2);cursor:pointer}
-footer{color:var(--ink-3);font-size:.85rem;border-top:1px solid var(--rule);padding-top:20px}
-
-@media (max-width:760px){
-  .summary{grid-template-columns:minmax(0,1fr)}
-  .split{grid-template-columns:minmax(0,1fr)}
-}
-@media (prefers-reduced-motion:no-preference){
-  .toggle button{transition:background .15s ease,color .15s ease}
-}
-</style>
+  </script>
 </head>
 <body>
-<div class="wrap">
 
-<header class="hero">
-  <div class="name">FailBank</div>
-  <h1>Learning from Runtime Feedback through Failure-Bank Self-Evolution for Vision-Language-Action Models</h1>
-  <!-- Replace with the author list and affiliations for the arXiv release. -->
-  <p class="authors"><span class="tba">Authors to be announced</span></p>
-  <nav class="links" aria-label="Resources">
-    <!-- Replace the two pending items with real links, e.g. <a class="btn primary" href="https://arxiv.org/abs/XXXX.XXXXX">Paper</a> -->
-    <span class="btn primary pending" aria-disabled="true">Paper <small>arXiv, soon</small></span>
-    <a class="btn" href="#code">Code</a>
-    <a class="btn" href="#results">Results</a>
-    <a class="btn" href="#bibtex">BibTeX</a>
-  </nav>
-</header>
+  <button class="scroll-to-top" onclick="scrollToTop()" title="Scroll to top" aria-label="Scroll to top">
+    <i class="fas fa-chevron-up"></i>
+  </button>
 
-<figure>
-  <div class="plate"><img src="static/qualitative.jpg" width="2046" height="856" alt="Two rows of simulator frames on the Level 2 onion task. Top row, AEGIS with the shield in the loop: the CBF is applied continuously from step 40 to 88, the arm is corrected away from the bottles and the episode times out at step 309. Bottom row, FailBank with the shield off: the teacher only records a shadow signal, the policy lifts the onion and places it in the bowl at step 189."></div>
-  <figcaption><b>A shield-collapse trajectory on the Level 2 onion task.</b> AEGIS repeatedly intervenes near the bottles and eventually times out. FailBank was trained from observe-only CBF supervision and runs with the shield off; it places the onion in the bowl.</figcaption>
-</figure>
+  <main id="main-content">
 
-<section aria-labelledby="idea">
-  <div class="sec-head"><span class="label">Idea</span><h2 id="idea">Use the shield as a teacher, not as a filter</h2></div>
-  <div class="prose">
-    <p>Runtime shields such as control-barrier-function (CBF) filters correct individual actions of a VLA policy, but the policy itself never changes. The same disagreement between policy and shield recurs every episode, and on harder tasks it can block progress entirely, as in the trajectory above.</p>
-    <p><strong>FailBank converts those corrections into a policy update.</strong> While the policy controls the robot, an observe-only CBF teacher labels every action it would have changed. The labels are filtered by what actually happened afterwards, accumulated across rounds in a failure bank, and distilled into a LoRA adapter that is only accepted if it passes a held-out drift guard. The shield is used during collection and switched off at deployment.</p>
-  </div>
-  <div class="seam" role="img" aria-label="Per step during collection: the environment executes the policy's action a_t, while the teacher's proposal and trigger are only recorded."><span class="c"># every control step during collection</span>
-a_t          = <span class="k">policy</span>(o_t, instruction)
-ã_t, z_t     = <span class="k">teacher</span>(state, a_t)        <span class="c"># CBF proposal and trigger, never executed</span>
-env.step(a_t)                             <span class="c"># the policy's own action runs</span>
-record(o_t, a_t, ã_t, z_t, outcome)       <span class="c"># outcome is attached after the rollout</span></div>
-  <div class="tldr">
-    <div><h3>Higher success, comparable cost</h3><p>Across ten static-obstacle tasks, mean SR rises from 66.0% to 74.5% on π0.5 and from 47.5% to 54.4% on π0, with policy-induced cost comparable to runtime shielding (30.76 vs 29.01 and 8.09 vs 6.27).</p></div>
-    <div><h3>No collapse on hard tasks</h3><p>On π0.5, shielding in the loop drops Level 2 Onion from 81.3% to 1.3% and Tomato from 74.0% to 28.7%. FailBank reaches 82.7% and 84.9% on the same tasks.</p></div>
-    <div><h3>Transfer from one task</h3><p>All update data comes from Level 1 Mango. The gains extend to held-out initial states, unseen Level 1 tasks and Level 2 without Level 2 update data.</p></div>
-  </div>
-</section>
+  <!-- Title, authors, links -->
+  <section class="hero">
+    <div class="hero-body">
+      <div class="container is-max-desktop">
+        <div class="columns is-centered">
+          <div class="column has-text-centered">
+            <h1 class="title is-2 publication-title">Learning from Runtime Feedback through Failure-Bank Self-Evolution for Vision-Language-Action Models</h1>
+            <div class="is-size-5 publication-authors">
+              <!-- TODO (Mingyue): replace the GitHub profile with a personal homepage if you have one -->
+              <span class="author-block"><a href="https://github.com/Mingyuee88" target="_blank">Mingyue Cui</a>,</span>
+              <span class="author-block"><a href="https://franciscoliu.github.io/" target="_blank">Zheyuan Liu</a>,</span>
+              <span class="author-block"><a href="https://yihan226.github.io/" target="_blank">Yihan Zhu</a>,</span>
+              <span class="author-block"><a href="https://jasonzhangzy1757.github.io/" target="_blank">Zheyuan Zhang</a></span>
+            </div>
+            <div class="is-size-5 publication-authors">
+              <span class="author-block">University of Notre Dame</span>
+            </div>
+            <div class="contact-line">mcui3@nd.edu</div>
 
-<section aria-labelledby="method">
-  <div class="sec-head"><span class="label">Method</span><h2 id="method">Four stages per round</h2></div>
-  <figure>
-    <div class="plate"><img src="static/pipeline.png" width="2400" height="944" alt="The four-stage FailBank loop: observe and label, admit and weight, accumulate, update with a held-out guard; the accepted policy collects the next round."></div>
-    <figcaption><b>The FailBank loop.</b> Stage 1 collects policy-controlled rollouts while logging CBF proposals without altering execution. Stage 2 discards invalid records and splits valid ones into CBF-triggered corrections and quiet anchors with their targets and weights. Stage 3 accumulates the valid records in the bank. Stage 4 fits a fresh LoRA adapter and accepts the candidate only if it passes the held-out guard; the accepted policy collects the next round.</figcaption>
-  </figure>
-  <div class="stages">
-    <div class="stage"><span class="num">Stage 1</span><h3>Observe and label</h3><p>The current policy acts. A CBF teacher with privileged scene geometry proposes ã<sub>t</sub> for every nominal action and records whether it would have intervened. Only translation channels are edited.</p></div>
-    <div class="stage"><span class="num">Stage 2</span><h3>Admit and weight</h3><p>Each triggered record gets a weight from its observed consequences (forward barrier margin, progress, recovery, cost). Records whose target would teach a bad action are dropped: post-contact and emergency corrections, and everything from failed episodes except early, genuine corrections.</p></div>
-    <div class="stage"><span class="num">Stage 3</span><h3>Accumulate</h3><p>New records are added to the bank, never substituted, so each round adds failures the previous policy made. The held-out split is taken episode-wise by initial state.</p></div>
-    <div class="stage"><span class="num">Stage 4</span><h3>Update with a guard</h3><p>A fresh LoRA adapter is fitted on the first action of each chunk with the record weights. It is kept only if held-out flow loss stays within 1.10× and first-action drift within 0.05 of the starting policy.</p></div>
-  </div>
-</section>
-
-<section id="results" aria-labelledby="results-h">
-  <div class="sec-head"><span class="label">Results</span><h2 id="results-h">VLA-Arena static obstacles, Levels 1 and 2</h2></div>
-  <div class="prose">
-    <p>Each backbone is compared with its own base policy and with AEGIS, a CBF shield with GLM-4.5V perception that runs in the loop, under matched initial states. <strong>SR</strong> is task success (%). <strong>CC</strong> is VLA-Arena's official cumulative cost; <strong>CC<sub>policy</sub></strong> removes cost that is already present in the initial state. Level 1 Mango is the only task any update data came from.</p>
-  </div>
-  <div class="toggle" role="tablist" aria-label="Backbone">
-    <button id="tab-pi05" role="tab" aria-selected="true" aria-controls="results-panel" data-bb="pi05">π0.5</button>
-    <button id="tab-pi0" role="tab" aria-selected="false" aria-controls="results-panel" data-bb="pi0">π0</button>
-  </div>
-  <div id="results-panel" role="tabpanel" aria-labelledby="tab-pi05" style="display:flex;flex-direction:column;gap:18px">
-    <div class="summary" id="summary"></div>
-    <p class="note">Ten-task means with equal task weight. BRS summarises success and policy-induced cost relative to the base policy (base = e<sup>−1</sup> ≈ 0.368; 1 = no failures and no policy-induced cost).</p>
-    <div class="tablebox"><table id="table" aria-describedby="table-cap"></table></div>
-    <p class="note" id="table-cap">Per-task results. Best SR and CC<sub>policy</sub> per row in bold.</p>
-  </div>
-  <div class="split">
-    <figure>
-      <div class="plate"><img src="static/tradeoff.png" width="1500" height="1380" alt="Scatter of change in SR against change in policy-induced cost relative to each task's base policy, for FailBank and AEGIS on both backbones and both levels."></div>
-      <figcaption><b>Success–cost change relative to the base policy.</b> Circles and diamonds are π0.5 and π0, blue is FailBank and orange AEGIS, shade marks the level. The shaded upper-left quadrant is better on both axes: FailBank lands there on 8 of 20 task–backbone pairs, AEGIS on 3 of 20. AEGIS more often moves left but down.</figcaption>
-    </figure>
-    <div class="prose" style="padding-top:4px">
-      <h3>Base-relative score</h3>
-      <div class="formula">BRS = exp( −½ · [ (1 − SR) / (1 − SR<sub>base</sub>) + CC<sub>policy</sub> / CC<sub>policy,base</sub> ] )</div>
-      <p>The two terms are the remaining failure rate and the remaining policy-induced cost, each relative to the task's base policy. SR and CC stay the primary metrics; BRS is a compact summary of both.</p>
-      <h3>Generalization</h3>
-      <ul class="plain">
-        <li>Held-out initial states on π0.5 Level 1 Mango: SR 71.1% → 93.3%.</li>
-        <li>π0, the four Level 1 tasks never used for collection: SR 51.0% → 62.7%.</li>
-        <li>Level 2: no Level 2 rollout enters the update bank.</li>
-      </ul>
+            <div class="publication-links" style="margin-top: 1.5rem;">
+              <!-- TODO: replace XXXX.XXXXX with the arXiv id -->
+              <span class="link-block">
+                <a href="https://arxiv.org/pdf/XXXX.XXXXX" target="_blank" class="external-link button is-normal is-rounded is-dark">
+                  <span class="icon"><i class="fas fa-file-pdf"></i></span>
+                  <span>Paper</span>
+                </a>
+              </span>
+              <!-- TODO: replace with the public repository URL -->
+              <span class="link-block">
+                <a href="https://github.com/Mingyuee88/FailBank" target="_blank" class="external-link button is-normal is-rounded is-dark">
+                  <span class="icon"><i class="fab fa-github"></i></span>
+                  <span>Code</span>
+                </a>
+              </span>
+              <span class="link-block">
+                <a href="https://arxiv.org/abs/XXXX.XXXXX" target="_blank" class="external-link button is-normal is-rounded is-dark">
+                  <span class="icon"><i class="ai ai-arxiv"></i></span>
+                  <span>arXiv</span>
+                </a>
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
-  </div>
-</section>
+  </section>
 
-<section aria-labelledby="observe">
-  <div class="sec-head"><span class="label">Collection interface</span><h2 id="observe">Why the teacher must not act during collection</h2></div>
-  <div class="split">
-    <figure>
-      <div class="plate"><img src="static/collection_interface.png" width="1149" height="616" alt="Left: paired episode outcomes, observe-only against shield-in-loop collection; 32 both succeed, 8 succeed only observe-only, 5 succeed only with the shield, 1 fails in both. Right: failure records, 1,500 under observe-only collection against 2,700 with the shield in the loop, of which 88.9% are shield-induced."></div>
-      <figcaption><b>Collection interface on Level 1 Mango.</b> (a) Paired episode outcomes of the same initial states. (b) Failure records produced by each collection mode, split into policy failures and shield-induced failures.</figcaption>
-    </figure>
-    <div class="prose">
-      <p>If the shield's corrections are executed while collecting, the trajectory changes. On eight initial states the policy succeeds on its own but fails once the shield steers it.</p>
-      <p>Those eight states produce <strong>2,400 of the 2,700 failure records</strong> of a shield-in-loop bank (88.9%). They are failures of the shielded system, not of the policy on its own state distribution, so they are the wrong thing to learn from. Observe-only collection keeps the policy's own states and still records what the shield would have done.</p>
+  <!-- Teaser -->
+  <section class="hero teaser">
+    <div class="container is-max-desktop">
+      <div class="hero-body">
+        <figure class="section-figure">
+          <img src="static/images/teaser.jpg" width="2046" height="856"
+               alt="Level 2 onion task. Top: AEGIS with the shield in the loop applies its CBF from step 40 to 88, is corrected away from the bottles and times out at step 309. Bottom: FailBank with the shield off receives only a shadow signal, lifts the onion and succeeds at step 189.">
+        </figure>
+        <h2 class="subtitle has-text-centered" style="margin-top: 1.25rem;">
+          <b>A shield-collapse trajectory on the Level 2 onion task.</b> AEGIS repeatedly intervenes near the bottles and eventually times out.
+          FailBank uses observe-only CBF supervision and successfully places the onion in the bowl.
+        </h2>
+      </div>
     </div>
-  </div>
-</section>
+  </section>
 
-<section aria-labelledby="rounds">
-  <div class="sec-head"><span class="label">Self-evolution</span><h2 id="rounds">Accumulated rounds</h2></div>
-  <div class="split">
-    <figure>
-      <div class="plate"><img src="static/rounds.png" width="1400" height="623" alt="SR and policy-induced cost over five accumulated rounds as the bank grows from 3.7k to 22.7k records."></div>
-      <figcaption><b>Five accumulated rounds on one Level 1 task.</b> The bank grows from 3.7k records at round 1 to 22.7k at round 5. SR peaks at round 2 and CC<sub>policy</sub> is lowest at round 3; later rounds fluctuate while staying better than the base policy on both axes.</figcaption>
-    </figure>
-    <div class="prose">
-      <p>Most of the success gain arrives in the first round. SR differences between adjacent rounds are not statistically significant; the later rounds mainly move cost.</p>
+  <!-- Abstract -->
+  <section class="section hero is-light">
+    <div class="container is-max-desktop">
+      <div class="columns is-centered has-text-centered">
+        <div class="column is-four-fifths">
+          <h2 class="title is-3">Abstract</h2>
+          <div class="content has-text-justified">
+            <p>
+              Vision-language-action (VLA) models generalize broadly across robotic manipulation tasks, but complex environments require balancing task success with unintended contact. Runtime shields can correct individual actions, but they leave the underlying policy unchanged, so repeated disagreements may create a persistent policy&ndash;shield mismatch that blocks task progress. To address this challenge, we introduce <b>FailBank</b>, a four-stage self-evolving framework that converts runtime feedback into persistent policy improvement. During collection, a fixed CBF-based safety module serves as an observe-only teacher, producing counterfactual corrections while the policy remains in control. Outcome-aware admission then converts useful proposals into corrective targets and retains successful uncorrected actions as quiet anchors for guarded LoRA updates. We evaluate FailBank on the VLA-Arena benchmark across two difficulty levels and two VLA backbones. Compared with the base policies, FailBank improves the joint success&ndash;cost operating point. Across the two backbones, FailBank improves task success rate by 8.5 and 6.9 percentage points, while reducing policy-induced cumulative cost by 35.6% and 23.8%, respectively. Compared with runtime shielding, FailBank raises task success rate by 25.4 and 9.5 percentage points, while maintaining comparable policy-induced cumulative cost. These results show that runtime feedback can serve as persistent policy supervision rather than only as a temporary action constraint.
+            </p>
+          </div>
+        </div>
+      </div>
     </div>
-  </div>
-</section>
+  </section>
 
-<section aria-labelledby="limits">
-  <div class="sec-head"><span class="label">Scope</span><h2 id="limits">Limitations</h2></div>
-  <ul class="plain prose">
-    <li>The default teacher reads ground-truth hazard positions from the simulator. It is a source of supervision in simulation, not a deployable shield.</li>
-    <li>Only the static-obstacle safety suite is evaluated. The other VLA-Arena safety suites do not fit the obstacle model for structural reasons, documented in the paper's appendix.</li>
-    <li>Giving loss weight to successful uncorrected steps (quiet anchors, λ<sub>q</sub> = 0.2) helped in the original run but did not survive retraining (ten-task ΔSR −5.73, ΔCC<sub>policy</sub> +9.68). The reported method uses λ<sub>q</sub> = 0.</li>
-    <li>Results are exact for one GPU model. The same weights on a different GPU model give different trajectories, so every comparison pins its cells to one host.</li>
-  </ul>
-</section>
+  <!-- Method -->
+  <section class="section">
+    <div class="container is-max-desktop">
+      <h2 class="title is-3 has-text-centered">Method</h2>
+      <figure class="section-figure">
+        <img src="static/images/pipeline.png" width="2600" height="1023"
+             alt="The four-stage FailBank loop: observe and label, admit and weight, accumulate, and update with a held-out guard; the accepted policy collects the next round.">
+      </figure>
+      <p class="figure-caption">
+        <b>The four-stage FailBank loop.</b> Stage 1 collects policy-controlled rollouts while logging CBF proposals without altering execution.
+        Stage 2 discards invalid records and filters valid records into CBF-triggered corrections and quiet anchors, assigning their targets and weights.
+        Stage 3 accumulates the valid records in the training bank. Stage 4 fits a fresh LoRA adapter and accepts the candidate policy only if it passes the held-out guard.
+        The accepted policy is then used to collect rollouts in the next round.
+      </p>
 
-<section id="code" aria-labelledby="code-h">
-  <div class="sec-head"><span class="label">Code</span><h2 id="code-h">Code and reproduction</h2></div>
-  <div class="prose">
-    <p>The release contains all four stages, the held-out guard and the evaluation harness. It runs inside VLA-Arena's OpenPI environment with one small patch (a step seam in the evaluator). Only the core is needed to reproduce FailBank; the AEGIS baseline is an optional extra.</p>
-  </div>
-<pre class="code"><span class="c"># VLA-Arena at the verified commit, plus the FailBank patch</span>
+      <div class="columns is-multiline stages block-gap">
+        <div class="column is-half">
+          <p class="stage-name"><span class="stage-num">01</span>Observe &amp; label</p>
+          <p>The current policy controls the robot. An observe-only CBF teacher with privileged scene geometry proposes a corrected action &atilde;<sub>t</sub> for every nominal action a<sub>t</sub> and records whether it would have intervened. The environment always executes a<sub>t</sub>, so collection stays on the policy's own state distribution.</p>
+        </div>
+        <div class="column is-half">
+          <p class="stage-name"><span class="stage-num">02</span>Admit &amp; weight</p>
+          <p>After each rollout, triggered steps are scored by their observed consequences and become corrective targets with a weight. Records whose target would teach a harmful action, such as post-contact and emergency corrections, are dropped. Successful uncorrected actions can be kept as quiet anchors.</p>
+        </div>
+        <div class="column is-half">
+          <p class="stage-name"><span class="stage-num">03</span>Accumulate</p>
+          <p>Valid records are added to the failure bank rather than replacing it, so each round contributes failures that the previous policy made.</p>
+        </div>
+        <div class="column is-half">
+          <p class="stage-name"><span class="stage-num">04</span>Update with a held-out guard</p>
+          <p>A fresh LoRA adapter is fitted on the base policy with a record-weighted loss on the first action of each chunk. It is accepted only if held-out flow loss stays within 1.10&times; and first-action drift within 0.05 of the starting policy.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main results -->
+  <section class="section hero is-light">
+    <div class="container is-max-desktop">
+      <h2 class="title is-3 has-text-centered">Main Results</h2>
+
+      <div class="stat-row">
+        <div class="stat"><div class="value">+8.5 / +6.9</div><div class="label">SR points over base<br>(&pi;<sub>0.5</sub> / &pi;<sub>0</sub>)</div></div>
+        <div class="stat"><div class="value">&minus;35.6% / &minus;23.8%</div><div class="label">policy-induced CC vs. base<br>(&pi;<sub>0.5</sub> / &pi;<sub>0</sub>)</div></div>
+        <div class="stat"><div class="value">+25.4 / +9.5</div><div class="label">SR points over AEGIS<br>(&pi;<sub>0.5</sub> / &pi;<sub>0</sub>)</div></div>
+      </div>
+
+      <div class="content has-text-justified">
+        <p>We evaluate on the VLA-Arena static-obstacle safety suite, five tasks at each of Levels 1 and 2, with the Arena-finetuned &pi;<sub>0.5</sub> and &pi;<sub>0</sub> checkpoints. Update data is collected only on the Level 1 Mango task; the other nine tasks, including all of Level 2, are unseen during collection. We compare against the base policy and AEGIS, a CBF runtime shield with GLM-4.5V perception, under matched initial states. SR is task success rate (%), CC is VLA-Arena's official cumulative cost, and CC<sub>policy</sub> removes cost already present in the initial state.</p>
+      </div>
+
+      <p class="table-title">&pi;<sub>0.5</sub></p>
+      <div class="table-container">
+        <table class="table is-bordered is-narrow is-hoverable results-table" id="table-pi05"></table>
+      </div>
+      <p class="table-title block-gap">&pi;<sub>0</sub></p>
+      <div class="table-container">
+        <table class="table is-bordered is-narrow is-hoverable results-table" id="table-pi0"></table>
+      </div>
+      <p class="figure-caption" style="text-align: center;">Best SR and CC<sub>policy</sub> in each row, and the best BRS, in bold. BRS is the base-relative score (base policy = 0.368).</p>
+
+      <figure class="section-figure is-narrow block-gap">
+        <img src="static/images/tradeoff.png" width="1600" height="1471"
+             alt="Change in SR against change in policy-induced cost relative to each task's base policy, for FailBank and AEGIS on both backbones and both levels.">
+      </figure>
+      <p class="figure-caption">
+        <b>Success&ndash;cost trade-off relative to the base policy.</b> Circles and diamonds denote &pi;<sub>0.5</sub> and &pi;<sub>0</sub>, blue and orange denote FailBank and AEGIS, and shade indicates difficulty level.
+        Upward movement means higher success, and leftward movement means lower policy-induced cost, so the shaded upper-left quadrant is better on both.
+        FailBank places more points in this joint-improvement region, while AEGIS more often moves left but downward.
+      </p>
+    </div>
+  </section>
+
+  <!-- Analysis -->
+  <section class="section">
+    <div class="container is-max-desktop">
+      <h2 class="title is-3 has-text-centered">Collection Interface and Learning Signals</h2>
+      <figure class="section-figure">
+        <img src="static/images/learning_signal.png" width="1883" height="517"
+             alt="(a) Paired episode outcomes under observe-only and shield-in-loop collection. (b) Failure records by collection mode, 1,500 against 2,700 of which 88.9% are shield-induced. (c) and (d) SR and policy-induced cost of Base, Correction-only and with quiet anchors.">
+      </figure>
+      <p class="figure-caption">
+        <b>Ablations of the collection interface and learning signals.</b>
+        (a) Paired episode outcomes under observe-only and shield-in-loop collection on the Level 1 mango task. Rows show observe-only outcomes, while columns show outcomes when shield corrections are executed.
+        (b) Failure records produced on the same task by the two collection modes, separated by policy failures and shield-induced failures.
+        (c&ndash;d) Comparison of Base, training on CBF-triggered records (Correction-only), and training with additional successful uncorrected actions (+ quiet anchor).
+      </p>
+      <div class="content has-text-justified block-gap">
+        <p>Executing the shield during collection changes the trajectory: on eight initial states the policy succeeds on its own but fails once the shield steers it, and these states account for 88.9% of the failure records in a shield-in-loop bank. Such records describe failures of the shielded system rather than of the policy, which is why FailBank keeps the teacher observe-only.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Rounds -->
+  <section class="section hero is-light">
+    <div class="container is-max-desktop">
+      <h2 class="title is-3 has-text-centered">Accumulated Self-Evolution Rounds</h2>
+      <figure class="section-figure is-narrow">
+        <img src="static/images/round_curves.png" width="933" height="768"
+             alt="SR and policy-induced cost across five accumulated rounds as the bank grows from 3.7k to 22.7k records.">
+      </figure>
+      <p class="figure-caption">
+        <b>Self-evolution across accumulated rounds on the Level 1 onion task.</b> The failure bank grows from 3.7k records at R1 to 22.7k at R5.
+        SR peaks at R2, whereas CC<sub>policy</sub> reaches its minimum at R3. Later rounds fluctuate while remaining improved over the base policy on both axes.
+      </p>
+    </div>
+  </section>
+
+  <!-- Code -->
+  <section class="section" id="code">
+    <div class="container is-max-desktop">
+      <h2 class="title is-3 has-text-centered">Code</h2>
+      <div class="content has-text-justified">
+        <p>The release contains all four stages, the held-out guard and the evaluation harness. It runs inside VLA-Arena's OpenPI environment with one small patch that adds a step seam to the evaluator. The core package reproduces FailBank without the AEGIS baseline or any VLM service; AEGIS is an optional extra. The CBF teacher is an interface, so other observe-only shields can be plugged in.</p>
+      </div>
+<pre class="shell"><code># VLA-Arena at the verified commit, plus the FailBank patch
 git clone https://github.com/PKU-Alignment/VLA-Arena.git && cd VLA-Arena
-git checkout 2ddcb00 && git apply ../failbank/patches/vla-arena-2ddcb00.patch
-<span class="c"># inside VLA-Arena's OpenPI environment</span>
-pip install -e ../failbank
-export FAILBANK_CHECKPOINTS=/path/to/checkpoints   <span class="c"># Arena pi0.5 / pi0 finetunes</span>
-bash ../failbank/examples/minimal/run_minimal.sh   <span class="c"># collect, gate, one guarded update, evaluate</span></pre>
-  <div class="prose">
-    <p>The teacher is an interface. Any object with <code>reset(ctx)</code> and <code>propose(ctx, a_t)</code> that returns a proposal and a trigger can replace the CBF teacher (<code>--teacher package.module:Class</code>). A different teacher gives different labels and will not reproduce the paper's numbers.</p>
-    <p>Before release, the refactored code was run against the original research code and the archived runs on the same machine: evaluation cells matched step for step (executed actions, costs and teacher verdicts), and collected records, derived folds and the gated training set matched byte for byte.</p>
-  </div>
-</section>
+git checkout 2ddcb00 && git apply ../FailBank/patches/vla-arena-2ddcb00.patch
+# inside VLA-Arena's OpenPI environment
+pip install -e ../FailBank
+export FAILBANK_CHECKPOINTS=/path/to/checkpoints   # Arena pi0.5 / pi0 finetunes
+bash ../FailBank/examples/minimal/run_minimal.sh   # collect, gate, one guarded update, evaluate</code></pre>
+    </div>
+  </section>
 
-<section id="bibtex" aria-labelledby="bib-h">
-  <div class="sec-head"><span class="label">Cite</span><h2 id="bib-h">BibTeX</h2></div>
-  <div class="bib">
-<pre class="code" id="bibtext">@article{failbank2026,
-  title   = {Learning from Runtime Feedback through Failure-Bank
-             Self-Evolution for Vision-Language-Action Models},
-  author  = {TBA},
+  <!-- Limitations -->
+  <section class="section hero is-light">
+    <div class="container is-max-desktop">
+      <h2 class="title is-3 has-text-centered">Limitations</h2>
+      <div class="content has-text-justified">
+        <ul>
+          <li>The CBF teacher reads ground-truth hazard geometry from the simulator. It is a source of supervision in simulation, not a deployable shield.</li>
+          <li>Only the VLA-Arena static-obstacle suite is evaluated; the other safety suites do not fit the obstacle model for structural reasons.</li>
+          <li>Most of the success gain arrives in the first round; SR differences between adjacent rounds are not significant.</li>
+          <li>The quiet-anchor gain at &lambda;<sub>q</sub> = 0.2 did not survive retraining (ten-task &Delta;SR &minus;5.73, &Delta;CC<sub>policy</sub> +9.68).</li>
+          <li>Evaluation cells are reproducible only on a fixed GPU model; every comparison pins its cells to one machine.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- BibTeX -->
+  <section class="section" id="BibTeX">
+    <div class="container is-max-desktop content">
+      <div class="bibtex-header">
+        <h2 class="title">BibTeX</h2>
+        <button class="copy-bibtex-btn" onclick="copyBibTeX()" title="Copy BibTeX to clipboard">
+          <i class="fas fa-copy"></i>
+          <span class="copy-text">Copy</span>
+        </button>
+      </div>
+      <!-- TODO: add eprint = {XXXX.XXXXX} once the arXiv id exists -->
+      <pre id="bibtex-code"><code>@article{cui2026failbank,
+  title   = {Learning from Runtime Feedback through Failure-Bank Self-Evolution for Vision-Language-Action Models},
+  author  = {Cui, Mingyue and Liu, Zheyuan and Zhu, Yihan and Zhang, Zheyuan},
   journal = {arXiv preprint},
   year    = {2026}
-}</pre>
-    <button class="copy" id="copybib" type="button">Copy</button>
-  </div>
-</section>
+}</code></pre>
+    </div>
+  </section>
 
-<footer>This page lives in <code>docs/</code> of the FailBank repository. Benchmark: VLA-Arena safety_static_obstacles, Levels 1–2. Backbones: Arena-finetuned π0.5 and π0.</footer>
-</div>
+  </main>
 
-<script>
-(function(){
-  // Per-task results from the paper's summary table: [SR, CC, CC_policy] for Base, AEGIS, FailBank.
-  var DATA = {
-    pi05: {
-      brs: [0.368, 0.350, 0.498],
-      rows: [
-        ["1","Apple",[90.0,9.12,"0.12"],[82.0,8.20,"0.00"],[90.3,9.21,"0.21"]],
-        ["1","Lemon",[83.0,44.07,"35.87"],[78.0,7.81,"0.01"],[81.0,25.98,"17.88"]],
-        ["1","Mango",[77.0,74.08,"66.38"],[68.0,21.08,"14.28"],[93.7,23.12,"13.76"]],
-        ["1","Onion",[72.0,33.88,"27.18"],[44.0,9.12,"4.71"],[90.0,31.63,"23.50"]],
-        ["1","Tomato",[85.0,45.31,"37.01"],[94.0,17.39,"7.99"],[93.3,34.28,"25.04"]],
-        ["2","Apple",[8.0,67.51,"65.89"],[7.3,90.73,"89.26"],[34.2,68.75,"61.90"]],
-        ["2","Lemon",[0.0,158.14,"158.13"],[0.0,141.51,"141.51"],[0.0,110.14,"110.12"]],
-        ["2","Mango",[89.3,51.41,"33.93"],[88.0,28.75,"11.15"],[95.1,35.24,"16.61"]],
-        ["2","Onion",[81.3,16.33,"0.067"],[1.3,0.27,"0.000"],[82.7,16.54,"0.004"]],
-        ["2","Tomato",[74.0,67.87,"53.07"],[28.7,26.93,"21.20"],[84.9,55.44,"38.55"]]
-      ]
-    },
-    pi0: {
-      brs: [0.368, 0.441, 0.443],
-      rows: [
-        ["1","Apple",[54.0,5.40,"0.00"],[82.0,8.20,"0.00"],[59.0,5.90,"0.00"]],
-        ["1","Lemon",[66.0,6.60,"0.00"],[80.0,8.00,"0.00"],[84.0,8.40,"0.00"]],
-        ["1","Mango",[92.0,11.34,"2.14"],[82.0,9.40,"1.20"],[93.0,12.39,"3.09"]],
-        ["1","Onion",[28.0,18.34,"16.74"],[30.0,3.00,"0.00"],[24.0,12.02,"10.32"]],
-        ["1","Tomato",[56.0,5.60,"0.00"],[44.0,4.40,"0.00"],[84.0,8.46,"0.06"]],
-        ["2","Apple",[0.0,66.31,"66.31"],[0.0,54.63,"54.62"],[0.3,50.29,"50.22"]],
-        ["2","Lemon",[2.0,14.09,"13.69"],[10.7,7.39,"5.26"],[0.3,4.53,"4.46"]],
-        ["2","Mango",[95.3,22.47,"3.67"],[94.7,19.61,"0.67"],[94.7,24.41,"5.80"]],
-        ["2","Onion",[30.7,6.13,"0.000"],[6.7,1.34,"0.007"],[25.3,5.07,"0.000"]],
-        ["2","Tomato",[50.7,13.75,"3.61"],[19.3,4.81,"0.95"],[79.3,22.67,"6.93"]]
-      ]
-    }
-  };
-  var METHODS = [
-    {name:"Base", color:"var(--base)", cls:""},
-    {name:"AEGIS", color:"var(--aegis)", cls:""},
-    {name:"FailBank", color:"var(--fb)", cls:"fb"}
-  ];
-  function fmt(x, d){ return Number(x).toFixed(d); }
-  function esc(s){ return String(s).replace(/[&<>]/g, function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;"}[c];}); }
+  <footer class="footer">
+    <div class="container">
+      <div class="columns is-centered">
+        <div class="column is-8">
+          <div class="content">
+            <p>
+              This page was built using the <a href="https://github.com/eliahuhorwitz/Academic-project-page-template" target="_blank">Academic Project Page Template</a> which was adopted from the <a href="https://nerfies.github.io" target="_blank">Nerfies</a> project page.
+              You are free to borrow the source code of this website, we just ask that you link back to this page in the footer. <br> This website is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/" target="_blank">Creative
+              Commons Attribution-ShareAlike 4.0 International License</a>.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </footer>
 
-  function renderSummary(bb){
-    var d = DATA[bb], html = "";
-    METHODS.forEach(function(m, i){
-      var sr = 0, ccp = 0;
-      d.rows.forEach(function(r){ sr += r[2+i][0]; ccp += parseFloat(r[2+i][2]); });
-      sr /= d.rows.length; ccp /= d.rows.length;
-      html += '<div class="card ' + m.cls + '"><div class="who"><span class="dot" style="background:' + m.color + '"></span>' + m.name + '</div>' +
-        '<div class="metrics">' +
-        '<div class="metric"><span class="v">' + fmt(sr,1) + '</span><span class="n">mean SR %</span></div>' +
-        '<div class="metric"><span class="v">' + fmt(ccp,2) + '</span><span class="n">mean CC<sub>policy</sub></span></div>' +
-        '<div class="metric"><span class="v">' + fmt(d.brs[i],3) + '</span><span class="n">BRS</span></div>' +
-        '</div></div>';
-    });
-    document.getElementById("summary").innerHTML = html;
-  }
-
-  function renderTable(bb){
-    var d = DATA[bb];
-    var h = '<thead><tr><th class="l" colspan="2"></th>' +
-      '<th colspan="3" class="grp">Base</th><th colspan="3" class="grp aegishead">AEGIS</th><th colspan="3" class="grp fbhead">FailBank</th></tr>' +
-      '<tr><th class="l">Level</th><th class="l">Task</th>';
-    for (var k = 0; k < 3; k++) h += '<th class="grp">SR ↑</th><th>CC ↓</th><th>CC<sub>policy</sub> ↓</th>';
-    h += '</tr></thead><tbody>';
-    var lastLevel = null;
-    d.rows.forEach(function(r){
-      var srs = [r[2][0], r[3][0], r[4][0]];
-      var ccs = [parseFloat(r[2][2]), parseFloat(r[3][2]), parseFloat(r[4][2])];
-      var bestSr = Math.max.apply(null, srs), bestCc = Math.min.apply(null, ccs);
-      var cls = (lastLevel !== null && r[0] !== lastLevel) ? ' class="lvl"' : '';
-      lastLevel = r[0];
-      h += '<tr' + cls + '><td class="l">L' + r[0] + '</td><td class="l task">' + esc(r[1]) +
-        (r[0] === "1" && r[1] === "Mango" ? '<span class="tag">collection</span>' : '') + '</td>';
-      for (var i = 0; i < 3; i++){
-        var c = r[2+i], fbc = i === 2 ? ' fbcol' : '';
-        h += '<td class="grp' + (c[0] === bestSr ? ' best' + fbc : '') + '">' + fmt(c[0],1) + '</td>' +
-             '<td>' + fmt(c[1],2) + '</td>' +
-             '<td class="' + (parseFloat(c[2]) === bestCc ? 'best' + fbc : '') + '">' + esc(c[2]) + '</td>';
+  <script>
+  // Results from the paper's summary table: [SR, CC, CC_policy] for Base, AEGIS, FailBank.
+  (function () {
+    var DATA = {
+      "table-pi05": {
+        brs: [0.368, 0.350, 0.498],
+        rows: [
+          ["1", "Apple",  [90.0, 9.12, "0.12"],  [82.0, 8.20, "0.00"],  [90.3, 9.21, "0.21"]],
+          ["1", "Lemon",  [83.0, 44.07, "35.87"], [78.0, 7.81, "0.01"],  [81.0, 25.98, "17.88"]],
+          ["1", "Mango",  [77.0, 74.08, "66.38"], [68.0, 21.08, "14.28"], [93.7, 23.12, "13.76"]],
+          ["1", "Onion",  [72.0, 33.88, "27.18"], [44.0, 9.12, "4.71"],  [90.0, 31.63, "23.50"]],
+          ["1", "Tomato", [85.0, 45.31, "37.01"], [94.0, 17.39, "7.99"], [93.3, 34.28, "25.04"]],
+          ["2", "Apple",  [8.0, 67.51, "65.89"],  [7.3, 90.73, "89.26"], [34.2, 68.75, "61.90"]],
+          ["2", "Lemon",  [0.0, 158.14, "158.13"], [0.0, 141.51, "141.51"], [0.0, 110.14, "110.12"]],
+          ["2", "Mango",  [89.3, 51.41, "33.93"], [88.0, 28.75, "11.15"], [95.1, 35.24, "16.61"]],
+          ["2", "Onion",  [81.3, 16.33, "0.067"], [1.3, 0.27, "0.000"],  [82.7, 16.54, "0.004"]],
+          ["2", "Tomato", [74.0, 67.87, "53.07"], [28.7, 26.93, "21.20"], [84.9, 55.44, "38.55"]]
+        ]
+      },
+      "table-pi0": {
+        brs: [0.368, 0.441, 0.443],
+        rows: [
+          ["1", "Apple",  [54.0, 5.40, "0.00"],  [82.0, 8.20, "0.00"],  [59.0, 5.90, "0.00"]],
+          ["1", "Lemon",  [66.0, 6.60, "0.00"],  [80.0, 8.00, "0.00"],  [84.0, 8.40, "0.00"]],
+          ["1", "Mango",  [92.0, 11.34, "2.14"], [82.0, 9.40, "1.20"],  [93.0, 12.39, "3.09"]],
+          ["1", "Onion",  [28.0, 18.34, "16.74"], [30.0, 3.00, "0.00"], [24.0, 12.02, "10.32"]],
+          ["1", "Tomato", [56.0, 5.60, "0.00"],  [44.0, 4.40, "0.00"],  [84.0, 8.46, "0.06"]],
+          ["2", "Apple",  [0.0, 66.31, "66.31"], [0.0, 54.63, "54.62"], [0.3, 50.29, "50.22"]],
+          ["2", "Lemon",  [2.0, 14.09, "13.69"], [10.7, 7.39, "5.26"],  [0.3, 4.53, "4.46"]],
+          ["2", "Mango",  [95.3, 22.47, "3.67"], [94.7, 19.61, "0.67"], [94.7, 24.41, "5.80"]],
+          ["2", "Onion",  [30.7, 6.13, "0.000"], [6.7, 1.34, "0.007"],  [25.3, 5.07, "0.000"]],
+          ["2", "Tomato", [50.7, 13.75, "3.61"], [19.3, 4.81, "0.95"],  [79.3, 22.67, "6.93"]]
+        ]
       }
-      h += '</tr>';
+    };
+    function fmt(x, d) { return Number(x).toFixed(d); }
+    Object.keys(DATA).forEach(function (id) {
+      var d = DATA[id];
+      var h = '<colgroup><col class="c-level"><col class="c-task">' + new Array(10).join('<col class="c-num">') + '</colgroup>' +
+        '<thead><tr><th rowspan="2">Level</th><th rowspan="2">Task</th>' +
+        '<th colspan="3" class="grp-start">Base</th>' +
+        '<th colspan="3" class="grp-start aegis-head">AEGIS</th>' +
+        '<th colspan="3" class="grp-start fb-head">FailBank</th></tr><tr>';
+      for (var k = 0; k < 3; k++) {
+        h += '<th class="grp-start">SR&thinsp;&uarr;</th><th>CC&thinsp;&darr;</th><th>CC<sub>policy</sub>&thinsp;&darr;</th>';
+      }
+      h += '</tr></thead><tbody>';
+      d.rows.forEach(function (r, i) {
+        var srs = [r[2][0], r[3][0], r[4][0]];
+        var ccs = [parseFloat(r[2][2]), parseFloat(r[3][2]), parseFloat(r[4][2])];
+        var bestSr = Math.max.apply(null, srs), bestCc = Math.min.apply(null, ccs);
+        h += '<tr>';
+        if (i === 0 || i === 5) { h += '<td rowspan="5">L' + r[0] + '</td>'; }
+        h += '<td>' + r[1] + (r[0] === "1" && r[1] === "Mango" ? '<span class="collect-tag">collection</span>' : '') + '</td>';
+        for (var m = 0; m < 3; m++) {
+          var c = r[2 + m];
+          h += '<td class="grp-start' + (c[0] === bestSr ? ' best' : '') + '">' + fmt(c[0], 1) + '</td>' +
+               '<td>' + fmt(c[1], 2) + '</td>' +
+               '<td class="' + (parseFloat(c[2]) === bestCc ? 'best' : '') + '">' + c[2] + '</td>';
+        }
+        h += '</tr>';
+      });
+      var best = Math.max.apply(null, d.brs);
+      h += '<tr class="brs-row"><td colspan="2">BRS&thinsp;&uarr;</td>';
+      d.brs.forEach(function (b) {
+        h += '<td colspan="3" class="grp-start' + (b === best ? ' best' : '') + '">' + fmt(b, 3) + '</td>';
+      });
+      h += '</tr></tbody>';
+      document.getElementById(id).innerHTML = h;
     });
-    var best = Math.max.apply(null, d.brs);
-    h += '<tr class="brs"><td class="l task" colspan="2">BRS ↑</td>';
-    d.brs.forEach(function(b, i){
-      h += '<td colspan="3" class="grp' + (b === best ? ' best' + (i === 2 ? ' fbcol' : '') : '') + '" style="text-align:center">' + fmt(b,3) + '</td>';
-    });
-    h += '</tr></tbody>';
-    document.getElementById("table").innerHTML = h;
-  }
+  })();
+  </script>
 
-  function select(bb){
-    document.querySelectorAll('.toggle button').forEach(function(b){
-      var on = b.getAttribute('data-bb') === bb;
-      b.setAttribute('aria-selected', on ? 'true' : 'false');
-      if (on) document.getElementById('results-panel').setAttribute('aria-labelledby', b.id);
-    });
-    renderSummary(bb); renderTable(bb);
-  }
-  document.querySelectorAll('.toggle button').forEach(function(b){
-    b.addEventListener('click', function(){ select(b.getAttribute('data-bb')); });
-  });
-  select('pi05');
-
-  var copyBtn = document.getElementById('copybib');
-  copyBtn.addEventListener('click', function(){
-    var text = document.getElementById('bibtext').textContent;
-    function selectText(){
-      var range = document.createRange(); range.selectNodeContents(document.getElementById('bibtext'));
-      var sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(range);
-      copyBtn.textContent = 'Selected';
-    }
-    if (navigator.clipboard && navigator.clipboard.writeText){
-      navigator.clipboard.writeText(text).then(function(){ copyBtn.textContent = 'Copied'; }, selectText);
-    } else { selectText(); }
-    setTimeout(function(){ copyBtn.textContent = 'Copy'; }, 1800);
-  });
-})();
-</script>
 </body>
 </html>

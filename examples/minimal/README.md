@@ -7,7 +7,8 @@
 2. **Stages 2–3** — derived records with fold 0 (offset 0 held out), a one-round bank, the
    admission gate (`--mode s1s2`);
 3. **Stage 4** — one guarded 800-step LoRA update from the base checkpoint (batch 32,
-   λ_q = 0, data seed 1), folded into a standard checkpoint;
+   λ_q = 0, data seed 1), validated every 100 steps; the best candidate the guard accepts is
+   folded into a standard checkpoint;
 4. **evaluation** — base and updated policy on the held-out offset 0.
 
 ```bash
@@ -29,7 +30,9 @@ runs/minimal/ckpt/              folded checkpoint
 runs/minimal/eval/{base,updated}/off0/result.json
 ```
 
-The update is trained on five episodes of one task, so the guard may reject it
-(`metrics_rejected.json`, non-zero exit): that is the guard working, not a crash. A single
+The update is trained on five episodes of one task and overfits quickly: at step 800 the
+held-out flow ratio is about 1.28, above the guard's 1.10 limit, which is why the example
+validates every 100 steps (`VAL_EVERY`) and keeps the best accepted point. If no point passes,
+the run stops with `metrics_rejected.json` and a non-zero exit; that is the guard working. A single
 held-out episode illustrates the pipeline; it is not evidence about the method. The paper's
 adapters are trained on a two-round bank of 6,535 gated records.

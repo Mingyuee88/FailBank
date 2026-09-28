@@ -13,6 +13,10 @@ PY=${PYTHON:-python}
 OUT=${OUT:-runs/minimal}
 N_OFFSETS=${N_OFFSETS:-6}
 STEPS=${STEPS:-800}
+# Validate every VAL_EVERY steps and keep the best candidate the guard accepts. Five short
+# episodes overfit long before 800 steps (at step 800 the held-out flow ratio is ~1.28, above
+# the 1.10 limit), so a single end-of-run validation would reject the update.
+VAL_EVERY=${VAL_EVERY:-100}
 PORT_BASE=${PORT_BASE:-38000}
 BASE=$FAILBANK_CHECKPOINTS/pi05_vla_arena_finetuned
 export MUJOCO_GL=${MUJOCO_GL:-egl} PYOPENGL_PLATFORM=${PYOPENGL_PLATFORM:-egl}
@@ -40,9 +44,10 @@ $PY -m failbank.pipeline.build_round_records --src-root "$OUT/bank" --dst-root "
 
 # 3. Stage 4: guarded update from the base checkpoint, then fold (CPU)
 if [ ! -s "$OUT/adapter/offset_0/metrics.json" ]; then
-  rm -rf "$OUT/adapter"
+  rm -rf "$OUT/adapter" "$OUT/ckpt"
   $PY -m failbank.train.lora_update --records "$OUT/bank_s1s2" --fold 0 --base-checkpoint "$BASE" \
-      --output-root "$OUT/adapter" --steps "$STEPS" --batch-size 32 --quiet-weight 0.0 --data-seed 1
+      --output-root "$OUT/adapter" --steps "$STEPS" --batch-size 32 --quiet-weight 0.0 --data-seed 1 \
+      --validation-interval "$VAL_EVERY"
 fi
 if [ ! -d "$OUT/ckpt/params" ]; then
   JAX_PLATFORMS=cpu $PY -m failbank.train.fold --adapter "$OUT/adapter/offset_0" --base "$BASE" \

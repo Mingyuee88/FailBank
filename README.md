@@ -2,7 +2,11 @@
 
 **Learning from runtime feedback through failure-bank self-evolution for vision-language-action models.**
 
-[Paper (arXiv, link TBA)]() · [Project page](https://TBA)
+[Mingyue Cui](https://github.com/Mingyuee88), [Zheyuan Liu](https://franciscoliu.github.io/), [Yihan Zhu](https://yihan226.github.io/), [Zheyuan Zhang](https://jasonzhangzy1757.github.io/)<br>
+University of Notre Dame · contact: mcui3@nd.edu
+
+<!-- TODO: fill in the arXiv id and the GitHub Pages URL -->
+[Paper (arXiv)](https://arxiv.org/abs/XXXX.XXXXX) · [Project page](https://mingyuee88.github.io/FailBank/)
 
 FailBank turns runtime feedback into persistent policy improvement. While the VLA policy
 controls the robot, an **observe-only** control-barrier teacher labels every nominal action
@@ -148,19 +152,18 @@ VLM endpoint. The core never imports it.
 |---|---|
 | all four stages, the admission gate, the held-out guard and the evaluation protocol | the trained adapters of the paper (not included; retrain them) |
 | record building and bank accumulation from your own collections | the paper's raw rollouts and record bank (3.1 GB; not included) |
-| the paper's numbers from the paper's bank and adapters, bit-for-bit on the same GPU model | bit-identical numbers on a different GPU model |
+| the paper's evaluation numbers from the paper's adapters, bit-for-bit on the same GPU model | bit-identical numbers on a different GPU model |
+| a guarded update that is bit-reproducible on one GPU model when run with `XLA_FLAGS=--xla_gpu_deterministic_ops=true` | bit-identical copies of the paper's adapters (they were trained without that flag) |
 
-* **GPU model is the only source of run-to-run variation.** With the deterministic server flags
-  set by `failbank-rollout`, a cell is bit-reproducible on one GPU model; the same weights on a
-  different model give different trajectories (L1-T3 base SR moved from 65.0 to 72.0 between two
-  machines). Pin every cell of a comparison to one host; `--seed` does not change the simulation.
-* **Provenance of the paper's bank.** The bank behind the reported adapters was not collected by
-  the base policy in round 1. Round-1 episodes were collected by an earlier adapter trained on a
-  preliminary record set, and round-2 episodes by a two-phase curriculum variant trained on round
-  1; the reported adapters were then trained from the base checkpoint on the merged bank
-  (6,535 training records after gating; validation fold: 600). Running the loop from the base
-  policy with this code follows the procedure described in the paper but is not the path that
-  produced its bank, so expect different numbers.
+* **Evaluation: the GPU model is the only source of run-to-run variation.** With the
+  deterministic server flags set by `failbank-rollout`, a cell is bit-reproducible on one GPU
+  model; the same weights on a different model give different trajectories (L1-T3 base SR moved
+  from 65.0 to 72.0 between two machines). Pin every cell of a comparison to one host; `--seed`
+  does not change the simulation.
+* **Training is not deterministic by default.** Without
+  `XLA_FLAGS=--xla_gpu_deterministic_ops=true`, two identical updates on the same GPU differ in
+  the last digits of their losses (and so in their adapters); with it they are bit-identical.
+  The paper's adapters were trained without the flag.
 * **The default teacher uses privileged simulator geometry.** It is a supervision source for
   simulation, not a deployable shield.
 
@@ -237,10 +240,10 @@ training and data-loading code in `failbank/train/` is derived from the OpenPI c
 with VLA-Arena (Apache-2.0). See `THIRD_PARTY_NOTICES.md` and `licenses/`.
 
 ```bibtex
-@article{failbank2026,
-  title  = {Learning from Runtime Feedback through Failure-Bank Self-Evolution for Vision-Language-Action Models},
-  author = {TBA},
-  year   = {2026},
-  note   = {arXiv preprint, TBA}
+@article{cui2026failbank,
+  title   = {Learning from Runtime Feedback through Failure-Bank Self-Evolution for Vision-Language-Action Models},
+  author  = {Cui, Mingyue and Liu, Zheyuan and Zhu, Yihan and Zhang, Zheyuan},
+  journal = {arXiv preprint},
+  year    = {2026}
 }
 ```

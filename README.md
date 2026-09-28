@@ -41,9 +41,11 @@ VLA-Arena static-obstacle suite, Levels 1–2, Arena-finetuned π<sub>0.5</sub> 
 </p>
 
 <p align="center">
-  <img src="docs/static/images/tradeoff.png" width="420" alt="Success-cost change relative to the base policy">
-  &nbsp;
-  <img src="docs/static/images/motivation.png" width="440" alt="Representative Level 2 results">
+  <img src="docs/static/images/tradeoff.png" width="480" alt="Success-cost change relative to the base policy">
+</p>
+
+<p align="center">
+  <img src="docs/static/images/motivation.png" width="760" alt="Representative Level 2 results: SR and policy-induced CC of Base, AEGIS and FailBank">
 </p>
 
 <details>

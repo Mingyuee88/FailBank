@@ -13,7 +13,6 @@
   <a href="https://arxiv.org/abs/XXXX.XXXXX"><img src="https://img.shields.io/badge/arXiv-XXXX.XXXXX-AD1C18.svg?logo=arXiv" alt="arXiv"></a>
   <a href="https://mingyuee88.github.io/FailBank/"><img src="https://img.shields.io/badge/Website-Project_Page-2373A6.svg?logo=googlechrome&logoColor=white" alt="Project page"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-Apache_2.0-368773.svg" alt="License"></a>
-  <img src="https://img.shields.io/badge/Benchmark-VLA--Arena-DA7C3C.svg" alt="VLA-Arena">
 </p>
 
 <p align="center">

@@ -1,11 +1,13 @@
 <h1 align="center">FailBank: Learning from Runtime Feedback through<br>Failure-Bank Self-Evolution for Vision-Language-Action Models</h1>
 
 <p align="center">
-  <a href="https://github.com/Mingyuee88">Mingyue Cui</a> ·
-  <a href="https://franciscoliu.github.io/">Zheyuan Liu</a> ·
+  <a href="https://github.com/Mingyuee88">Mingyue Cui</a><sup>*</sup> ·
+  <a href="https://franciscoliu.github.io/">Zheyuan Liu</a><sup>*</sup> ·
   <a href="https://yihan226.github.io/">Yihan Zhu</a> ·
-  <a href="https://jasonzhangzy1757.github.io/">Zheyuan Zhang</a><br>
-  University of Notre Dame
+  <a href="https://jasonzhangzy1757.github.io/">Zheyuan Zhang</a> ·
+  <a href="http://www.meng-jiang.com/">Meng Jiang</a><sup>†</sup><br>
+  University of Notre Dame<br>
+  <sub><sup>*</sup>Equal contribution &nbsp;&nbsp; <sup>†</sup>Corresponding author (mjiang2@nd.edu)</sub>
 </p>
 
 <p align="center">
@@ -120,7 +122,7 @@ More details (reproduction, data field notes): [NOTES.md](NOTES.md) · [VERIFICA
 ```bibtex
 @article{cui2026failbank,
   title   = {Learning from Runtime Feedback through Failure-Bank Self-Evolution for Vision-Language-Action Models},
-  author  = {Cui, Mingyue and Liu, Zheyuan and Zhu, Yihan and Zhang, Zheyuan},
+  author  = {Cui, Mingyue and Liu, Zheyuan and Zhu, Yihan and Zhang, Zheyuan and Jiang, Meng},
   journal = {arXiv preprint},
   year    = {2026}
 }

@@ -2,8 +2,8 @@
 
 **Learning from runtime feedback through failure-bank self-evolution for vision-language-action models.**
 
-[Mingyue Cui](https://github.com/Mingyuee88), [Zheyuan Liu](https://franciscoliu.github.io/), [Yihan Zhu](https://yihan226.github.io/), [Zheyuan Zhang](https://jasonzhangzy1757.github.io/)<br>
-University of Notre Dame · contact: mcui3@nd.edu
+[Mingyue Cui](https://github.com/Mingyuee88)\*, [Zheyuan Liu](https://franciscoliu.github.io/)\*, [Yihan Zhu](https://yihan226.github.io/), [Zheyuan Zhang](https://jasonzhangzy1757.github.io/), [Meng Jiang](http://www.meng-jiang.com/)†<br>
+University of Notre Dame · \*equal contribution · †corresponding author (mjiang2@nd.edu)
 
 <!-- TODO: fill in the arXiv id and the GitHub Pages URL -->
 [Paper (arXiv)](https://arxiv.org/abs/XXXX.XXXXX) · [Project page](https://mingyuee88.github.io/FailBank/)
@@ -242,7 +242,7 @@ with VLA-Arena (Apache-2.0). See `THIRD_PARTY_NOTICES.md` and `licenses/`.
 ```bibtex
 @article{cui2026failbank,
   title   = {Learning from Runtime Feedback through Failure-Bank Self-Evolution for Vision-Language-Action Models},
-  author  = {Cui, Mingyue and Liu, Zheyuan and Zhu, Yihan and Zhang, Zheyuan},
+  author  = {Cui, Mingyue and Liu, Zheyuan and Zhu, Yihan and Zhang, Zheyuan and Jiang, Meng},
   journal = {arXiv preprint},
   year    = {2026}
 }

@@ -8,7 +8,7 @@
   <meta name="title" content="FailBank: Learning from Runtime Feedback through Failure-Bank Self-Evolution for Vision-Language-Action Models">
   <meta name="description" content="FailBank turns observe-only CBF shield feedback into guarded LoRA updates, improving VLA task success and policy-induced cost on VLA-Arena for pi0.5 and pi0.">
   <meta name="keywords" content="vision-language-action, VLA, robot learning, runtime shield, control barrier function, self-evolution, LoRA, VLA-Arena, pi0.5, pi0">
-  <meta name="author" content="Mingyue Cui, Zheyuan Liu, Yihan Zhu, Zheyuan Zhang">
+  <meta name="author" content="Mingyue Cui, Zheyuan Liu, Yihan Zhu, Zheyuan Zhang, Meng Jiang">
   <meta name="robots" content="index, follow">
   <meta name="language" content="English">
 
@@ -21,6 +21,7 @@
   <meta property="og:image" content="static/images/pipeline.png">
   <meta property="og:image:alt" content="The four-stage FailBank loop">
   <meta property="article:author" content="Mingyue Cui">
+  <meta property="article:author" content="Zheyuan Liu">
   <meta property="article:section" content="Research">
 
   <!-- Twitter -->
@@ -35,6 +36,7 @@
   <meta name="citation_author" content="Liu, Zheyuan">
   <meta name="citation_author" content="Zhu, Yihan">
   <meta name="citation_author" content="Zhang, Zheyuan">
+  <meta name="citation_author" content="Jiang, Meng">
   <meta name="citation_publication_date" content="2026">
 
   <meta name="theme-color" content="#2373A6">
@@ -116,7 +118,8 @@
       {"@type": "Person", "name": "Mingyue Cui", "affiliation": {"@type": "Organization", "name": "University of Notre Dame"}},
       {"@type": "Person", "name": "Zheyuan Liu", "affiliation": {"@type": "Organization", "name": "University of Notre Dame"}},
       {"@type": "Person", "name": "Yihan Zhu", "affiliation": {"@type": "Organization", "name": "University of Notre Dame"}},
-      {"@type": "Person", "name": "Zheyuan Zhang", "affiliation": {"@type": "Organization", "name": "University of Notre Dame"}}
+      {"@type": "Person", "name": "Zheyuan Zhang", "affiliation": {"@type": "Organization", "name": "University of Notre Dame"}},
+      {"@type": "Person", "name": "Meng Jiang", "url": "http://www.meng-jiang.com/", "email": "mjiang2@nd.edu", "affiliation": {"@type": "Organization", "name": "University of Notre Dame"}}
     ],
     "datePublished": "2026",
     "keywords": ["vision-language-action", "runtime shield", "control barrier function", "self-evolution", "LoRA"],
@@ -141,15 +144,19 @@
             <h1 class="title is-2 publication-title">Learning from Runtime Feedback through Failure-Bank Self-Evolution for Vision-Language-Action Models</h1>
             <div class="is-size-5 publication-authors">
               <!-- TODO (Mingyue): replace the GitHub profile with a personal homepage if you have one -->
-              <span class="author-block"><a href="https://github.com/Mingyuee88" target="_blank">Mingyue Cui</a>,</span>
-              <span class="author-block"><a href="https://franciscoliu.github.io/" target="_blank">Zheyuan Liu</a>,</span>
+              <span class="author-block"><a href="https://github.com/Mingyuee88" target="_blank">Mingyue Cui</a><sup>*</sup>,</span>
+              <span class="author-block"><a href="https://franciscoliu.github.io/" target="_blank">Zheyuan Liu</a><sup>*</sup>,</span>
               <span class="author-block"><a href="https://yihan226.github.io/" target="_blank">Yihan Zhu</a>,</span>
-              <span class="author-block"><a href="https://jasonzhangzy1757.github.io/" target="_blank">Zheyuan Zhang</a></span>
+              <span class="author-block"><a href="https://jasonzhangzy1757.github.io/" target="_blank">Zheyuan Zhang</a>,</span>
+              <span class="author-block"><a href="http://www.meng-jiang.com/" target="_blank">Meng Jiang</a><sup>&dagger;</sup></span>
             </div>
             <div class="is-size-5 publication-authors">
               <span class="author-block">University of Notre Dame</span>
             </div>
-            <div class="contact-line">mcui3@nd.edu</div>
+            <div class="is-size-6 publication-authors">
+              <span class="eql-cntrb"><sup>*</sup>Equal contribution &nbsp;&nbsp; <sup>&dagger;</sup>Corresponding author</span>
+            </div>
+            <div class="contact-line">mjiang2@nd.edu</div>
 
             <div class="publication-links" style="margin-top: 1.5rem;">
               <!-- TODO: replace XXXX.XXXXX with the arXiv id -->
@@ -365,7 +372,7 @@ bash ../FailBank/examples/minimal/run_minimal.sh   # collect, gate, one guarded 
       <!-- TODO: add eprint = {XXXX.XXXXX} once the arXiv id exists -->
       <pre id="bibtex-code"><code>@article{cui2026failbank,
   title   = {Learning from Runtime Feedback through Failure-Bank Self-Evolution for Vision-Language-Action Models},
-  author  = {Cui, Mingyue and Liu, Zheyuan and Zhu, Yihan and Zhang, Zheyuan},
+  author  = {Cui, Mingyue and Liu, Zheyuan and Zhu, Yihan and Zhang, Zheyuan and Jiang, Meng},
   journal = {arXiv preprint},
   year    = {2026}
 }</code></pre>

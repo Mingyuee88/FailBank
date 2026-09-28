@@ -6,8 +6,6 @@
   <a href="https://yihan226.github.io/">Yihan Zhu</a> ·
   <a href="https://jasonzhangzy1757.github.io/">Zheyuan Zhang</a> ·
   <a href="http://www.meng-jiang.com/">Meng Jiang</a><sup>†</sup><br>
-  University of Notre Dame<br>
-  <sub><sup>*</sup>Equal contribution &nbsp;&nbsp; <sup>†</sup>Corresponding author (mjiang2@nd.edu)</sub>
 </p>
 
 <p align="center">

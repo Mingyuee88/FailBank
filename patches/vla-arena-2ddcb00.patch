@@ -1,0 +1,234 @@
+diff --git a/vla_arena/models/openpi/evaluator.py b/vla_arena/models/openpi/evaluator.py
+index 204bac9..0b396a6 100644
+--- a/vla_arena/models/openpi/evaluator.py
++++ b/vla_arena/models/openpi/evaluator.py
+@@ -36,6 +36,7 @@ import tyro
+ import yaml
+ from openpi_client import image_tools
+ from openpi_client import websocket_client_policy as _websocket_client_policy
++from websockets.sync.client import connect as _websocket_connect
+ 
+ from vla_arena.models.openpi.workflow_utils import load_train_config_from_yaml
+ from vla_arena.models.openpi.workflow_utils import resolve_checkpoint_dir
+@@ -235,6 +236,39 @@ def _is_port_open(host: str, port: int, timeout_sec: float) -> bool:
+         return False
+ 
+ 
++def _is_websocket_ready(host: str, port: int, timeout_sec: float) -> bool:
++    """Perform a protocol-valid readiness handshake without sending inference.
++
++    An open TCP port is not a ready policy server: the websocket listener binds before
++    the model has finished loading, so polling the port lets the first inference hit a
++    server that is still initialising.
++    """
++    connect_host = _normalize_host(host)
++    if connect_host == '0.0.0.0':
++        connect_host = '127.0.0.1'
++    elif connect_host == '::':
++        connect_host = '::1'
++    try:
++        with _websocket_connect(
++            f'ws://{connect_host}:{int(port)}',
++            open_timeout=float(timeout_sec),
++            close_timeout=float(timeout_sec),
++        ):
++            return True
++    except (OSError, TimeoutError):
++        return False
++
++
++def runtime_env_step(env, obs, task_description, action, cfg, t):
++    """Environment step seam used by run_episode.
++
++    The default is exactly the upstream behaviour, ``env.step(action.tolist())``.
++    External runtimes (e.g. FailBank) replace this module attribute to observe or
++    label each step; run_episode looks it up at call time.
++    """
++    return env.step(action.tolist())
++
++
+ def _build_serve_policy_command(
+     cfg: GenerateConfig,
+     config_name: str,
+@@ -292,7 +326,7 @@ def _wait_for_policy_server_ready(
+                 'Auto-started OpenPI policy server exited early with code '
+                 f'{process.returncode}.'
+             )
+-        if _is_port_open(
++        if _is_websocket_ready(
+             host, port, timeout_sec=max(0.05, poll_interval_sec)
+         ):
+             return
+@@ -534,7 +568,8 @@ def run_episode(
+             action = action_plan.popleft()
+ 
+             # Execute action in environment
+-            obs, reward, done, info = env.step(action.tolist())
++            obs, reward, done, info = runtime_env_step(
++                env, obs, task_description, action, cfg, t)
+             if 'cost' in info:
+                 cost += info['cost']
+             if done or t == max_steps + cfg.num_steps_wait - 1:
+@@ -941,6 +976,12 @@ def get_vla_arena_env(
+         'add_noise': add_noise,
+         'light_adjustment': adjust_light,
+     }
++    # The published AEGIS shield builds its obstacle cloud from agentview + backview RGB-D.
++    # Requesting the extra camera and the depth planes unconditionally would change the
++    # observation dict for every other run, so it is switched on only when asked for.
++    if os.environ.get('FAILBANK_AEGIS_CAMERAS', '0') == '1':
++        env_args['camera_names'] = ['agentview', 'robot0_eye_in_hand', 'backview']
++        env_args['camera_depths'] = True
+     env = OffScreenRenderEnv(**env_args)
+     return env, task_description
+ 
+diff --git a/vla_arena/vla_arena/assets/scenes/floor_base_style.xml b/vla_arena/vla_arena/assets/scenes/floor_base_style.xml
+index 77d2b3d..03ced66 100644
+--- a/vla_arena/vla_arena/assets/scenes/floor_base_style.xml
++++ b/vla_arena/vla_arena/assets/scenes/floor_base_style.xml
+@@ -50,6 +50,10 @@
+     <camera mode="fixed" name="birdview" pos="-0.2 0 3.0" quat="0.7071 0 0 0.7071"/>
+     <!-- agent view -->
+     <camera mode="fixed" name="agentview" pos="0.5 0 1.35" quat="0.653 0.271 0.271 0.653"/>
++    <!-- backview copied verbatim from vlsa-aegis libero_floor_base_style.xml; the two scenes
++         share a world frame (agentview/birdview/sideview agree exactly), so this
++         camera lands where the published AEGIS pipeline expects it. -->
++    <camera mode="fixed" name="backview" pos="-0.45 -0.8 0.3" quat="0.766 0.588 -0.158 -0.205"/>
+ 
+     <!-- side view -->
+     <camera mode="fixed" name="sideview" pos="-0.05651774593317116 1.2761224129427358 1.4879572214102434" quat="0.009905065491771751 0.006877963156909582 0.5912228352893879 0.806418094001364" />
+diff --git a/vla_arena/vla_arena/assets/scenes/floor_blue_style.xml b/vla_arena/vla_arena/assets/scenes/floor_blue_style.xml
+index 43c6de7..2c0f725 100644
+--- a/vla_arena/vla_arena/assets/scenes/floor_blue_style.xml
++++ b/vla_arena/vla_arena/assets/scenes/floor_blue_style.xml
+@@ -46,6 +46,10 @@
+     <camera mode="fixed" name="birdview" pos="-0.2 0 3.0" quat="0.7071 0 0 0.7071"/>
+     <!-- agent view -->
+     <camera mode="fixed" name="agentview" pos="0.5 0 1.35" quat="0.653 0.271 0.271 0.653"/>
++    <!-- backview copied verbatim from vlsa-aegis libero_floor_base_style.xml; the two scenes share a
++         world frame (agentview, birdview, sideview agree exactly), so this camera lands
++         where the published AEGIS pipeline expects it. -->
++    <camera mode="fixed" name="backview" pos="-0.45 -0.8 0.3" quat="0.766 0.588 -0.158 -0.205"/>
+ 
+     <!-- side view -->
+     <camera mode="fixed" name="sideview" pos="-0.05651774593317116 1.2761224129427358 1.4879572214102434" quat="0.009905065491771751 0.006877963156909582 0.5912228352893879 0.806418094001364" />
+diff --git a/vla_arena/vla_arena/assets/scenes/floor_coffee_style.xml b/vla_arena/vla_arena/assets/scenes/floor_coffee_style.xml
+index c51d3aa..b8a588d 100644
+--- a/vla_arena/vla_arena/assets/scenes/floor_coffee_style.xml
++++ b/vla_arena/vla_arena/assets/scenes/floor_coffee_style.xml
+@@ -47,6 +47,10 @@
+     <camera mode="fixed" name="birdview" pos="-0.2 0 3.0" quat="0.7071 0 0 0.7071"/>
+     <!-- agent view -->
+     <camera mode="fixed" name="agentview" pos="0.5 0 1.35" quat="0.653 0.271 0.271 0.653"/>
++    <!-- backview copied verbatim from vlsa-aegis libero_floor_base_style.xml; the two scenes share a
++         world frame (agentview, birdview, sideview agree exactly), so this camera lands
++         where the published AEGIS pipeline expects it. -->
++    <camera mode="fixed" name="backview" pos="-0.45 -0.8 0.3" quat="0.766 0.588 -0.158 -0.205"/>
+ 
+     <!-- side view -->
+     <camera mode="fixed" name="sideview" pos="-0.05651774593317116 1.2761224129427358 1.4879572214102434" quat="0.009905065491771751 0.006877963156909582 0.5912228352893879 0.806418094001364" />
+diff --git a/vla_arena/vla_arena/assets/scenes/floor_warm_style.xml b/vla_arena/vla_arena/assets/scenes/floor_warm_style.xml
+index 7ba0c0a..1cad524 100644
+--- a/vla_arena/vla_arena/assets/scenes/floor_warm_style.xml
++++ b/vla_arena/vla_arena/assets/scenes/floor_warm_style.xml
+@@ -46,6 +46,10 @@
+     <camera mode="fixed" name="birdview" pos="-0.2 0 3.0" quat="0.7071 0 0 0.7071"/>
+     <!-- agent view -->
+     <camera mode="fixed" name="agentview" pos="0.5 0 1.35" quat="0.653 0.271 0.271 0.653"/>
++    <!-- backview copied verbatim from vlsa-aegis libero_floor_base_style.xml; the two scenes share a
++         world frame (agentview, birdview, sideview agree exactly), so this camera lands
++         where the published AEGIS pipeline expects it. -->
++    <camera mode="fixed" name="backview" pos="-0.45 -0.8 0.3" quat="0.766 0.588 -0.158 -0.205"/>
+ 
+     <!-- side view -->
+     <camera mode="fixed" name="sideview" pos="-0.05651774593317116 1.2761224129427358 1.4879572214102434" quat="0.009905065491771751 0.006877963156909582 0.5912228352893879 0.806418094001364" />
+diff --git a/vla_arena/vla_arena/assets/scenes/living_room_tabletop_base_style.xml b/vla_arena/vla_arena/assets/scenes/living_room_tabletop_base_style.xml
+index 76ad901..0cf1cf5 100644
+--- a/vla_arena/vla_arena/assets/scenes/living_room_tabletop_base_style.xml
++++ b/vla_arena/vla_arena/assets/scenes/living_room_tabletop_base_style.xml
+@@ -67,6 +67,10 @@
+     <camera mode="fixed" name="birdview" pos="-0.2 0 3.0" quat="0.7071 0 0 0.7071"/>
+     <!-- agent view -->
+     <camera mode="fixed" name="agentview" pos="0.5 0 1.35" quat="0.653 0.271 0.271 0.653"/>
++    <!-- backview copied verbatim from vlsa-aegis libero_living_room_tabletop_base_style.xml; the two scenes
++         share a world frame (agentview/birdview/sideview agree exactly), so this
++         camera lands where the published AEGIS pipeline expects it. -->
++    <camera mode="fixed" name="backview" pos="-0.4 0.8 0.7" quat="0.0923 0.0923 -0.70106 -0.70106"/>
+ 
+     <!-- side view -->
+     <camera mode="fixed" name="sideview" pos="-0.05651774593317116 1.2761224129427358 1.4879572214102434" quat="0.009905065491771751 0.006877963156909582 0.5912228352893879 0.806418094001364" />
+diff --git a/vla_arena/vla_arena/assets/scenes/tabletop_base_style.xml b/vla_arena/vla_arena/assets/scenes/tabletop_base_style.xml
+index 7aaf3b8..2e1dcac 100644
+--- a/vla_arena/vla_arena/assets/scenes/tabletop_base_style.xml
++++ b/vla_arena/vla_arena/assets/scenes/tabletop_base_style.xml
+@@ -55,6 +55,10 @@
+     <camera mode="fixed" name="birdview" pos="-0.2 0 3.0" quat="0.7071 0 0 0.7071"/>
+     <!-- agent view -->
+     <camera mode="fixed" name="agentview" pos="0.5 0 1.35" quat="0.653 0.271 0.271 0.653"/>
++    <!-- backview copied verbatim from vlsa-aegis libero_tabletop_base_style.xml; the two scenes
++         share a world frame (agentview/birdview/sideview agree exactly), so this
++         camera lands where the published AEGIS pipeline expects it. -->
++    <camera mode="fixed" name="backview" pos="-0.4 1.07 1.25" quat="0.0923 0.0923 -0.70106 -0.70106"/>
+ 
+     <!-- side view -->
+     <camera mode="fixed" name="sideview" pos="-0.05651774593317116 1.2761224129427358 1.4879572214102434" quat="0.009905065491771751 0.006877963156909582 0.5912228352893879 0.806418094001364" />
+diff --git a/vla_arena/vla_arena/assets/scenes/tabletop_blue_style.xml b/vla_arena/vla_arena/assets/scenes/tabletop_blue_style.xml
+index 663bf66..46f1b67 100644
+--- a/vla_arena/vla_arena/assets/scenes/tabletop_blue_style.xml
++++ b/vla_arena/vla_arena/assets/scenes/tabletop_blue_style.xml
+@@ -54,6 +54,10 @@
+     <camera mode="fixed" name="birdview" pos="-0.2 0 3.0" quat="0.7071 0 0 0.7071"/>
+     <!-- agent view -->
+     <camera mode="fixed" name="agentview" pos="0.5 0 1.35" quat="0.653 0.271 0.271 0.653"/>
++    <!-- backview copied verbatim from vlsa-aegis libero_tabletop_base_style.xml; the two scenes share a
++         world frame (agentview, birdview, sideview agree exactly), so this camera lands
++         where the published AEGIS pipeline expects it. -->
++    <camera mode="fixed" name="backview" pos="-0.4 1.07 1.25" quat="0.0923 0.0923 -0.70106 -0.70106"/>
+     <!-- side view -->
+     <camera mode="fixed" name="sideview" pos="-0.05651774593317116 1.2761224129427358 1.4879572214102434" quat="0.009905065491771751 0.006877963156909582 0.5912228352893879 0.806418094001364" />
+   </worldbody>
+diff --git a/vla_arena/vla_arena/assets/scenes/tabletop_metal_style.xml b/vla_arena/vla_arena/assets/scenes/tabletop_metal_style.xml
+index 7e14ea3..e14a7e3 100644
+--- a/vla_arena/vla_arena/assets/scenes/tabletop_metal_style.xml
++++ b/vla_arena/vla_arena/assets/scenes/tabletop_metal_style.xml
+@@ -54,6 +54,10 @@
+     <camera mode="fixed" name="birdview" pos="-0.2 0 3.0" quat="0.7071 0 0 0.7071"/>
+     <!-- agent view -->
+     <camera mode="fixed" name="agentview" pos="0.5 0 1.35" quat="0.653 0.271 0.271 0.653"/>
++    <!-- backview copied verbatim from vlsa-aegis libero_tabletop_base_style.xml; the two scenes share a
++         world frame (agentview, birdview, sideview agree exactly), so this camera lands
++         where the published AEGIS pipeline expects it. -->
++    <camera mode="fixed" name="backview" pos="-0.4 1.07 1.25" quat="0.0923 0.0923 -0.70106 -0.70106"/>
+     <!-- side view -->
+     <camera mode="fixed" name="sideview" pos="-0.05651774593317116 1.2761224129427358 1.4879572214102434" quat="0.009905065491771751 0.006877963156909582 0.5912228352893879 0.806418094001364" />
+   </worldbody>
+diff --git a/vla_arena/vla_arena/assets/scenes/tabletop_warm_style.xml b/vla_arena/vla_arena/assets/scenes/tabletop_warm_style.xml
+index c652558..5334b7f 100644
+--- a/vla_arena/vla_arena/assets/scenes/tabletop_warm_style.xml
++++ b/vla_arena/vla_arena/assets/scenes/tabletop_warm_style.xml
+@@ -51,6 +51,10 @@
+     <camera mode="fixed" name="birdview" pos="-0.2 0 3.0" quat="0.7071 0 0 0.7071"/>
+     <!-- agent view -->
+     <camera mode="fixed" name="agentview" pos="0.5 0 1.35" quat="0.653 0.271 0.271 0.653"/>
++    <!-- backview copied verbatim from vlsa-aegis libero_tabletop_base_style.xml; the two scenes share a
++         world frame (agentview, birdview, sideview agree exactly), so this camera lands
++         where the published AEGIS pipeline expects it. -->
++    <camera mode="fixed" name="backview" pos="-0.4 1.07 1.25" quat="0.0923 0.0923 -0.70106 -0.70106"/>
+     <!-- side view -->
+     <camera mode="fixed" name="sideview" pos="-0.05651774593317116 1.2761224129427358 1.4879572214102434" quat="0.009905065491771751 0.006877963156909582 0.5912228352893879 0.806418094001364" />
+   </worldbody>
+diff --git a/vla_arena/vla_arena/assets/scenes/tabletop_wooden_style.xml b/vla_arena/vla_arena/assets/scenes/tabletop_wooden_style.xml
+index 11db7e2..077e8b6 100644
+--- a/vla_arena/vla_arena/assets/scenes/tabletop_wooden_style.xml
++++ b/vla_arena/vla_arena/assets/scenes/tabletop_wooden_style.xml
+@@ -54,6 +54,10 @@
+     <camera mode="fixed" name="birdview" pos="-0.2 0 3.0" quat="0.7071 0 0 0.7071"/>
+     <!-- agent view -->
+     <camera mode="fixed" name="agentview" pos="0.5 0 1.35" quat="0.653 0.271 0.271 0.653"/>
++    <!-- backview copied verbatim from vlsa-aegis libero_tabletop_base_style.xml; the two scenes share a
++         world frame (agentview, birdview, sideview agree exactly), so this camera lands
++         where the published AEGIS pipeline expects it. -->
++    <camera mode="fixed" name="backview" pos="-0.4 1.07 1.25" quat="0.0923 0.0923 -0.70106 -0.70106"/>
+     <!-- side view -->
+     <camera mode="fixed" name="sideview" pos="-0.05651774593317116 1.2761224129427358 1.4879572214102434" quat="0.009905065491771751 0.006877963156909582 0.5912228352893879 0.806418094001364" />
+   </worldbody>

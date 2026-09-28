@@ -1,0 +1,39 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "failbank"
+version = "0.1.0"
+description = "FailBank: learning from observe-only shield feedback to improve VLA policies (VLA-Arena)"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "Apache-2.0" }
+# The record pipeline (Stages 2-3) needs only numpy. Rollouts and training (Stages 1, 4)
+# run inside VLA-Arena's OpenPI environment, which provides jax/flax/orbax/torch,
+# openpi-client, websockets, mujoco and robosuite; they are deliberately not pinned here.
+dependencies = ["numpy>=1.24", "pyyaml>=6"]
+
+[project.optional-dependencies]
+# Published AEGIS as an in-loop baseline; additionally needs a vlsa-aegis checkout
+# (see extras/aegis_baseline/README.md) and a GLM-4.5V endpoint.
+aegis = ["cvxpy>=1.4", "scipy>=1.10", "httpx>=0.24"]
+test = ["pytest>=7"]
+
+[project.scripts]
+failbank-rollout = "failbank.runtime.rollout:main"
+failbank-build-derived = "failbank.pipeline.build_derived:main"
+failbank-merge-bank = "failbank.pipeline.merge_bank:main"
+failbank-build-round = "failbank.pipeline.build_round_records:main"
+failbank-train = "failbank.train.lora_update:main"
+failbank-fold = "failbank.train.fold:main"
+
+[tool.setuptools]
+# failbank_aegis (the optional AEGIS baseline) lives under extras/ but installs with the
+# package; it is only importable usefully with the [aegis] extra and a vlsa-aegis checkout.
+package-dir = { "" = "src", "failbank_aegis" = "extras/aegis_baseline/failbank_aegis" }
+packages = ["failbank", "failbank.teacher", "failbank.records", "failbank.pipeline",
+            "failbank.train", "failbank.runtime", "failbank_aegis"]
+
+[tool.setuptools.package-data]
+failbank = ["configs/*.yaml"]

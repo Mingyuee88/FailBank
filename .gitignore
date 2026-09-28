@@ -1,0 +1,16 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.venv/
+.pytest_cache/
+.DS_Store
+# large artifacts never belong in the repo (anchored: src/failbank/records/ is source code)
+/checkpoints/
+/results/
+/outputs/
+/runs/
+*.npy
+*.npz
+server_port*.log

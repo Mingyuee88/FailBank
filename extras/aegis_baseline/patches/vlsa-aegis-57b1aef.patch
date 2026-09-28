@@ -1,0 +1,167 @@
+diff --git a/main/main_aegis_translational.py b/main/main_aegis_translational.py
+index e96e0fe..6030845 100644
+--- a/main/main_aegis_translational.py
++++ b/main/main_aegis_translational.py
+@@ -199,39 +199,51 @@ def eval_libero(args: Args) -> None:
+ 
+             img_out_dir = out_dir/f"{episode_idx}"
+             img_out_dir.mkdir(parents=True, exist_ok=True)
+-            # 获取最容易撞到的障碍物
+-            obstacle_infromation = obstacle_detection(agentview_img, task_description, args.task_suite_name)
+-            # obstacle_infromation = "yellow rectangular book"
+-            agent_view_points = get_point_cloud(agentview_img, agentview_depth, env, "agentview", obstacle_infromation, model_groundingdino, img_out_dir)
++            # AEGIS_DISABLE_SHIELD=1 selects the unshielded base-policy arm. Same harness,
++            # same episodes, same accounting, safety layer never engaged. Perception is
++            # skipped with it: it only exists to build the barrier, and skipping avoids a
++            # GLM call per episode that the run cannot use.
++            import os as _os
++            if _os.environ.get("AEGIS_DISABLE_SHIELD", "0") == "1":
++                flag_safety_control = False
++            else:
++                # 获取最容易撞到的障碍物
++                obstacle_infromation = obstacle_detection(agentview_img, task_description, args.task_suite_name)
++                agent_view_points = get_point_cloud(agentview_img, agentview_depth, env, "agentview", obstacle_infromation, model_groundingdino, img_out_dir)
+             # import pandas as pd
+             # df = pd.DataFrame(agent_view_points, columns=["X", "Y", "Z"])
+             # df.to_csv("agent_view_points.csv", index=False)
+             
+-            backview_img = np.ascontiguousarray(obs["backview_image"][::-1, ::-1])
+-            backview_depth = np.ascontiguousarray(obs["backview_depth"][::-1, ::-1])
+-            back_view_points = get_point_cloud(backview_img, backview_depth, env, "backview", obstacle_infromation, model_groundingdino, img_out_dir)
++                backview_img = np.ascontiguousarray(obs["backview_image"][::-1, ::-1])
++                backview_depth = np.ascontiguousarray(obs["backview_depth"][::-1, ::-1])
++                back_view_points = get_point_cloud(backview_img, backview_depth, env, "backview", obstacle_infromation, model_groundingdino, img_out_dir)
+             
+             # df = pd.DataFrame(back_view_points, columns=["X", "Y", "Z"])
+             # df.to_csv("back_view_points.csv", index=False)
+             
+-            if agent_view_points.shape[1] > 0 and back_view_points.shape[1] > 0:
+-                full_points = np.vstack([agent_view_points, back_view_points])    # (Na + Nb, 3)
+-            elif agent_view_points.shape[1] == 0 and back_view_points.shape[1] > 0:
+-                full_points = back_view_points
+-            elif agent_view_points.shape[1] > 0 and back_view_points.shape[1] == 0:
+-                full_points = agent_view_points
+-            else:
+-                full_points = np.array([[]])
++                if agent_view_points.shape[1] > 0 and back_view_points.shape[1] > 0:
++                    full_points = np.vstack([agent_view_points, back_view_points])
++                elif agent_view_points.shape[1] == 0 and back_view_points.shape[1] > 0:
++                    full_points = back_view_points
++                elif agent_view_points.shape[1] > 0 and back_view_points.shape[1] == 0:
++                    full_points = agent_view_points
++                else:
++                    full_points = np.array([[]])
+ 
+             # df = pd.DataFrame(full_points, columns=["X", "Y", "Z"])
+             # df.to_csv("full_points.csv", index=False)
+ 
+             # 点云过滤
+-            filter_points = filtering_points(full_points)
++            # Upstream bug: this file calls filtering_points/1 while utils.py defines
++            # filtering_points(pts, task_suite_name) and the sibling main_aegis.py:217
++            # calls it correctly with args.task_suite_name. As released, the
++            # translational runner cannot complete a single episode. Fixed to match
++            # the sibling call exactly -- no behavioural choice of ours is involved.
++                filter_points = filtering_points(full_points, args.task_suite_name)
+             # print("过滤后的点云数量：", filter_points.shape[0])
+-            flag_safety_control = True
+-            if filter_points.shape[0] == 0:
+-                flag_safety_control = False
++                flag_safety_control = True
++                if filter_points.shape[0] == 0:
++                    flag_safety_control = False
+             # import pandas as pd
+             # df = pd.DataFrame(filter_points, columns=["X", "Y", "Z"])
+             # df.to_csv("filter_points.csv", index=False)
+diff --git a/main/utils.py b/main/utils.py
+index 01155e9..b83d3db 100644
+--- a/main/utils.py
++++ b/main/utils.py
+@@ -451,11 +451,61 @@ def obstacle_detection(image, instruction, task_suite_name):
+     matplotlib.use('Agg')  # ✅ Crucial: No GUI rendering
+     import matplotlib.pyplot as plt
+     import time
+-    api_key = ""
+-
+-    if api_key is None or api_key == "":
+-        raise ValueError("Please enter api_key")
+-    client = ZhipuAiClient(api_key=api_key)  # Fill in your own APIKey
++    # README asks for the key to be pasted here. Read it from the environment
++    # instead so the secret never enters this git-tracked file; the job exports it
++    # from a 600-mode file at run time. Behaviour is otherwise unchanged: an unset
++    # variable still yields "" and still raises below.
++    import os as _os
++    api_key = _os.environ.get("ZHIPUAI_API_KEY", "")
++
++    # Local vLLM (AEGIS_GLM_BASE_URL set) or the hosted endpoint (unset). Same SDK, same
++    # model name, same prompt, same sampling; only the base URL differs, so a local/hosted
++    # difference can only come from the model.
++    _local_url = _os.environ.get("AEGIS_GLM_BASE_URL", "")
++    if _local_url:
++        # zai 0.2.3 rewrites the multimodal payload and vLLM 400s on it; the same body sent
++        # as plain JSON is accepted. Post it directly rather than fighting the SDK, and
++        # keep the call site below byte-identical by mimicking the response shape.
++        import httpx as _httpx
++
++        class _Msg:
++            def __init__(self, c): self.content = c
++        class _Choice:
++            def __init__(self, c): self.message = _Msg(c)
++        class _Resp:
++            def __init__(self, c): self.choices = [_Choice(c)]
++
++        class _Completions:
++            @staticmethod
++            def create(**kw):
++                body = {k: v for k, v in kw.items() if v is not None}
++                last = None
++                for attempt in range(5):
++                    try:
++                        r = _httpx.post(_local_url.rstrip("/") + "/chat/completions",
++                                        json=body, timeout=600.0)
++                        r.raise_for_status()
++                        return _Resp(r.json()["choices"][0]["message"].get("content") or "")
++                    except Exception as exc:
++                        last = exc
++                        if attempt == 4:
++                            raise
++                        time.sleep(min(30.0, 5.0 * (2 ** attempt)))
++                raise last
++
++        class _Chat:
++            completions = _Completions()
++
++        class _LocalClient:
++            chat = _Chat()
++
++        client = _LocalClient()
++        _thinking_kwargs = {}   # Zhipu-only body field; vLLM rejects unknown fields
++    else:
++        if api_key is None or api_key == "":
++            raise ValueError("Please enter api_key")
++        client = ZhipuAiClient(api_key=api_key)  # Fill in your own APIKey
++        _thinking_kwargs = {"thinking": {"type": "enabled"}}
+     plt.imsave("obstacle_detection.png", image)
+ 
+     image_path="obstacle_detection.png"
+@@ -488,11 +538,16 @@ def obstacle_detection(image, instruction, task_suite_name):
+         ],
+         temperature=0.1, # Reduce randomness for more deterministic answers
+         top_p=0.1,
+-        thinking={
+-            "type":"enabled"
+-        }
++        **_thinking_kwargs
+     )
+-    clean_output = response.choices[0].message.content.replace("<|begin_of_box|>", "").replace("<|end_of_box|>", "")
++    _raw = response.choices[0].message.content or ""
++    # With --reasoning-parser glm45 the chain lands in reasoning_content and `content` is
++    # already bare. Strip a leaked block anyway: a served build without the parser would
++    # otherwise return the whole chain as the obstacle name, and GroundingDINO would be
++    # handed a paragraph. Failing loudly here is better than grounding on garbage.
++    if "</think>" in _raw:
++        _raw = _raw.rsplit("</think>", 1)[1]
++    clean_output = _raw.replace("<|begin_of_box|>", "").replace("<|end_of_box|>", "").strip()
+     print(clean_output)  # Output: gray cube
+     t1 = time.time()
+     print(f"large model thinking time: {t1-t0}s")

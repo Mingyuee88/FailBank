@@ -64,7 +64,11 @@ export PYTHONPATH=$PWD:$PYTHONPATH
 export FAILBANK_CHECKPOINTS=/path/to/checkpoints
 ```
 
-Checkpoints: [`VLA-Arena/pi05-vla-arena-finetuned`](https://huggingface.co/VLA-Arena/pi05-vla-arena-finetuned) → `pi05_vla_arena_finetuned/`, [`VLA-Arena/pi0-vla-arena-fintuned`](https://huggingface.co/VLA-Arena/pi0-vla-arena-fintuned) → `pi0_vla_arena_finetuned/`.
+Checkpoints: 
+
+[`VLA-Arena/pi05-vla-arena-finetuned`](https://huggingface.co/VLA-Arena/pi05-vla-arena-finetuned) → `pi05_vla_arena_finetuned/`
+
+[`VLA-Arena/pi0-vla-arena-fintuned`](https://huggingface.co/VLA-Arena/pi0-vla-arena-fintuned) → `pi0_vla_arena_finetuned/`
 
 ## 🚀 Quick Start
 
@@ -123,4 +127,4 @@ More details (reproduction, data field notes): [NOTES.md](NOTES.md) · [VERIFICA
 
 ## Acknowledgment
 
-This project builds upon [VLA-Arena](https://github.com/PKU-Alignment/VLA-Arena), [openpi](https://github.com/Physical-Intelligence/openpi) and [vlsa-aegis](https://github.com/THU-RCSCT/vlsa-aegis). Licensed under Apache-2.0; see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+This project builds upon [VLA-Arena](https://github.com/PKU-Alignment/VLA-Arena), [openpi](https://github.com/Physical-Intelligence/openpi) and [vlsa-aegis](https://github.com/THU-RCSCT/vlsa-aegis). Please see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) to find more details.

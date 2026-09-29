@@ -15,10 +15,10 @@ export PYTHONPATH=/path/to/VLA-Arena:$PYTHONPATH     # patched, see the top-leve
 bash examples/minimal/run_minimal.sh
 ```
 
-Needs one 48 GB GPU and ~60 GB host RAM; about one hour on an L40S. Finished steps are
+Needs one 48 GB GPU and ~60 GB host RAM, and takes about one hour on an L40S. Finished steps are
 skipped on re-run. Results go to `runs/minimal/`.
 
 > [!NOTE]
-> The final evaluation is a single episode. It shows that the pipeline runs end to end; it is
+> The final evaluation is a single episode. It shows that the pipeline runs end to end, and it is
 > not a performance result. The paper's numbers come from 6,535 training records and full
 > evaluation over every initial state.

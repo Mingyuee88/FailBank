@@ -25,7 +25,7 @@
 
 ## 📖 Overview
 
-**FailBank** turns runtime shield feedback into persistent policy improvement. An **observe-only** CBF teacher labels the policy's actions without executing them; outcome-aware admission turns the labels into learning records that accumulate in a **failure bank**; a **guarded LoRA update** produces the next policy.
+**FailBank** turns runtime shield feedback into persistent policy improvement. An **observe-only** CBF teacher labels the policy's actions without executing them. Outcome-aware admission turns these labels into learning records, which accumulate in a **failure bank**. A **guarded LoRA update** then produces the next policy.
 
 <p align="center">
   <img src="docs/static/images/pipeline.png" width="900" alt="The four-stage FailBank loop">

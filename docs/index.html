@@ -265,7 +265,7 @@
       </div>
 
       <div class="content has-text-justified">
-        <p>We evaluate on the VLA-Arena static-obstacle safety suite, five tasks at each of Levels 1 and 2, with the Arena-finetuned &pi;<sub>0.5</sub> and &pi;<sub>0</sub> checkpoints. Update data is collected only on the Level 1 Mango task; the other nine tasks, including all of Level 2, are unseen during collection. We compare against the base policy and AEGIS, a CBF runtime shield with GLM-4.5V perception, under matched initial states. SR is task success rate (%), CC is VLA-Arena's official cumulative cost, and CC<sub>policy</sub> removes cost already present in the initial state.</p>
+        <p>We evaluate on the VLA-Arena static-obstacle safety suite, five tasks at each of Levels 1 and 2, with the Arena-finetuned &pi;<sub>0.5</sub> and &pi;<sub>0</sub> checkpoints. Update data is collected only on the Level 1 Mango task. The other nine tasks, including all of Level 2, are unseen during collection. We compare against the base policy and AEGIS, a CBF runtime shield with GLM-4.5V perception, under matched initial states. SR is task success rate (%), CC is VLA-Arena's official cumulative cost, and CC<sub>policy</sub> removes cost already present in the initial state.</p>
       </div>
 
       <p class="table-title">&pi;<sub>0.5</sub></p>
@@ -330,7 +330,7 @@
     <div class="container is-max-desktop">
       <h2 class="title is-3 has-text-centered">Code</h2>
       <div class="content has-text-justified">
-        <p>The release contains all four stages, the held-out guard and the evaluation harness. It runs inside VLA-Arena's OpenPI environment with one small patch that adds a step seam to the evaluator. The core package reproduces FailBank without the AEGIS baseline or any VLM service; AEGIS is an optional extra. The CBF teacher is an interface, so other observe-only shields can be plugged in.</p>
+        <p>The release contains all four stages, the held-out guard and the evaluation harness. It runs inside VLA-Arena's OpenPI environment with one small patch that adds a step seam to the evaluator. The core package reproduces FailBank without the AEGIS baseline or any VLM service. AEGIS is an optional extra. The CBF teacher is an interface, so other observe-only shields can be plugged in.</p>
       </div>
 <pre class="shell"><code># VLA-Arena at the verified commit, plus the FailBank patch
 git clone https://github.com/PKU-Alignment/VLA-Arena.git && cd VLA-Arena

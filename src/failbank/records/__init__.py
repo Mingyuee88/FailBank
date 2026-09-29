@@ -14,7 +14,6 @@ from .input_capture import InferCapture
 from .progress_capture import GoalExtractionError, ProgressCapture
 from .recorder import EpisodeRecorder
 from .schema_v1 import (
-    DerivedRecord,
     EpisodeRaw,
     ProjectionCandidateRaw,
     RawStep,
@@ -23,7 +22,6 @@ from .schema_v1 import (
 
 __all__ = [
     "CandidateSpec",
-    "DerivedRecord",
     "EpisodeRaw",
     "EpisodeRecorder",
     "GoalExtractionError",

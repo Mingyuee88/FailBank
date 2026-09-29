@@ -195,7 +195,6 @@ def train_fold(args, offset: int) -> dict[str, Any]:
         patience=args.patience,
         quiet_flow_loss_ratio_limit=args.quiet_flow_loss_ratio_limit,
         quiet_action_drift_limit=args.quiet_action_drift_limit,
-        first_k=args.supervise_first_k,
     )
     metrics.update({
         "offset": offset,
@@ -262,8 +261,6 @@ def parse_args(argv=None) -> argparse.Namespace:
     p.add_argument("--patience", type=int, default=99)
     p.add_argument("--quiet-flow-loss-ratio-limit", type=float, default=1.10)
     p.add_argument("--quiet-action-drift-limit", type=float, default=0.05)
-    p.add_argument("--supervise-first-k", type=int, default=1,
-                   help="supervise the first K chunk actions (paper: 1)")
     p.add_argument("--verify-sha256", action="store_true")
     p.add_argument("--num-workers", type=int, default=0)
     p.add_argument("--prompt", default=DEFAULT_PROMPT,

@@ -46,7 +46,7 @@ def test_stage_lead_is_offset_by_the_ten_settle_steps(tmp_path):
     steps = [raw_step(i, dist=0.05 if i >= 50 else 0.3) for i in range(60)]
     ed = write_episode(tmp_path, "aa" + "0" * 22, 0, False, steps)
     assert B.first_risk_step(ed) == 50
-    recs, _, kept, _ = B.build_all(tmp_path, B.Thresholds())
+    recs, kept, _ = B.build_all(tmp_path, B.Thresholds())
     by_idx = {r["step_index"]: r for r in recs}
     assert kept == 1
     assert by_idx[20]["steps_to_first_risk"] == 30 and by_idx[20]["curriculum_stage"] == "S1_early"
@@ -60,7 +60,7 @@ def test_stage_lead_is_offset_by_the_ten_settle_steps(tmp_path):
 def test_teacher_quality_rejects_untriggered_and_weights_triggered(tmp_path):
     steps = [raw_step(i, triggered=(i == 5), delta=0.2 if i == 5 else 0.0) for i in range(20)]
     ed = write_episode(tmp_path, "bb" + "0" * 22, 3, True, steps)
-    recs, _ = B.build_episode(ed, "3", True, B.Thresholds())
+    recs = B.build_episode(ed, "3", True, B.Thresholds())
     assert recs[5]["triggered"] and recs[5]["teacher"]["gate"] and recs[5]["teacher"]["weight"] > 0
     assert all(r["teacher"]["weight"] == 0.0 for i, r in enumerate(recs) if i != 5)
     assert all(r["quiet"] == (not r["triggered"]) for r in recs)

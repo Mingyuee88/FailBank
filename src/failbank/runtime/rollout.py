@@ -87,26 +87,6 @@ class FirstActionClient:
             raise
 
 
-class NativeChunkClient:
-    """Validate and forward the unmodified native chunk (replan_steps=5 reference)."""
-
-    def __init__(self, client):
-        self.client = client
-        self.telemetry: list[dict] = []
-        self.errors: list[str] = []
-
-    def infer(self, element):
-        try:
-            result = self.client.infer(element)
-            actions = np.asarray(result["actions"])
-            assert actions.ndim == 2 and actions.shape[1] == 7 and len(actions) >= 5
-            self.telemetry.append({"chunk_length": int(len(actions))})
-            return {**result, "actions": actions.copy()}
-        except Exception as exc:
-            self.errors.append(f"{type(exc).__name__}: {exc}")
-            raise
-
-
 def telemetry_summary(rows: list[dict]) -> dict:
     return {
         "inference_chunks": len(rows),
@@ -465,7 +445,7 @@ def run_cell(args, evaluator, hook: StepHook, report: dict) -> None:
         evaluator.GenerateConfig(**raw),
         task_suite_name=args.task_suite, task_level=args.task_level, num_trials_per_task=1,
         init_state_selection_mode="episode_idx", init_state_offset=args.offset,
-        init_state_offset_random=False, replan_steps=args.replan_steps, save_video_mode="none",
+        init_state_offset_random=False, replan_steps=1, save_video_mode="none",
         use_local_log=False, seed=args.seed, policy_checkpoint_dir=str(checkpoint),
     )
     suite = evaluator.benchmark.get_benchmark_dict()[cfg.task_suite_name]()
@@ -489,8 +469,7 @@ def run_cell(args, evaluator, hook: StepHook, report: dict) -> None:
     task_description = task.language[0] if isinstance(task.language, list) else task.language
     contract = ArenaControllerActionContract.from_env(env)
     report["controller_contract"] = contract.to_dict()
-    wrapped = (FirstActionClient(client, Pi05CanonicalActionAdapter(contract))
-               if args.replan_steps == 1 else NativeChunkClient(client))
+    wrapped = FirstActionClient(client, Pi05CanonicalActionAdapter(contract))
     episode_reports, combined_log = [], []
     for episode_idx in range(args.trials):
         initial_state_idx = evaluator.select_init_state_index(
@@ -507,13 +486,7 @@ def run_cell(args, evaluator, hook: StepHook, report: dict) -> None:
                                 "success": bool(success), "official_cost": float(cost)})
     hook.close()
     text = "\n".join(combined_log)
-    if args.replan_steps == 1:
-        adapter_report = telemetry_summary(wrapped.telemetry)
-    else:
-        adapter_report = {"inference_chunks": len(wrapped.telemetry),
-                          "chunk_lengths": sorted({x["chunk_length"] for x in wrapped.telemetry}),
-                          "all_actions_forwarded_unchanged": True, "corrections_applied": 0,
-                          "physical_units_gate": "pass", "native_replan_steps": 5}
+    adapter_report = telemetry_summary(wrapped.telemetry)
     report.update({
         "adapter": adapter_report, "inference_errors": wrapped.errors,
         "successes": sum(int(row["success"]) for row in episode_reports),
@@ -526,8 +499,7 @@ def run_cell(args, evaluator, hook: StepHook, report: dict) -> None:
     assert_report_identity(report, cfg, args.task_id)
     assert report["episode_finished_marker"] and not report["episode_error_marker"]
     assert not wrapped.errors and adapter_report["inference_chunks"] > 0
-    if args.replan_steps == 1:
-        assert adapter_report["first_actions_executed"] == adapter_report["replans_requested"]
+    assert adapter_report["first_actions_executed"] == adapter_report["replans_requested"]
     # The POLICY's action reaches the seam unmodified; only the seam decides what executes.
     assert adapter_report["all_actions_forwarded_unchanged"]
     assert adapter_report["corrections_applied"] == 0
@@ -566,7 +538,6 @@ def parse_args(argv=None):
     p.add_argument("--task-id", type=int, default=2)
     p.add_argument("--offset", type=int, required=True, help="initial-state offset")
     p.add_argument("--seed", type=int, default=17, help="recorded only; does not change the simulation")
-    p.add_argument("--replan-steps", type=int, choices=(1, 5), default=1)
     p.add_argument("--trials", type=int, default=1)
     p.add_argument("--openpi-config", default="pi05",
                    help="pi05 | pi0 | path to an evaluation yaml")
@@ -616,7 +587,7 @@ def main(argv=None):
     report: dict[str, Any] = {
         "status": "fail", "task_suite_name": args.task_suite, "task_level": args.task_level,
         "task_id": args.task_id, "init_state_offset": args.offset,
-        "replan_steps": args.replan_steps, "episodes_requested": args.trials,
+        "replan_steps": 1, "episodes_requested": args.trials,
     }
 
     teacher = load_teacher(args.teacher, alpha=args.teacher_alpha,

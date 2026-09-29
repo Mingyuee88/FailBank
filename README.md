@@ -87,7 +87,7 @@ failbank-rollout --output runs/r1/off0/result.json --task-level 1 --task-id 2 --
 # Stage 2-3  derive, accumulate, gate
 failbank-build-derived --records-root runs/r1/records --folds 0
 failbank-merge-bank    --round r1=runs/r1/records --round r2=runs/r2/records --out runs/bank
-failbank-build-round   --src-root runs/bank --dst-root runs/bank_s1s2 --mode s1s2
+failbank-build-round   --src-root runs/bank --dst-root runs/bank_s1s2
 
 # Stage 4  guarded LoRA update, fold
 failbank-train --records runs/bank_s1s2 --base-checkpoint $FAILBANK_CHECKPOINTS/pi05_vla_arena_finetuned \
@@ -108,11 +108,10 @@ src/failbank/     teacher/ records/ pipeline/ train/ runtime/
 patches/          VLA-Arena patch (evaluator step seam)
 extras/           AEGIS baseline (optional)
 examples/minimal  end-to-end example
-experiments/      original cluster launchers
 docs/             project page
 ```
 
-More details (reproduction, data field notes): [NOTES.md](NOTES.md) · [VERIFICATION.md](VERIFICATION.md)
+More details (reproducibility, record format and naming): [NOTES.md](NOTES.md)
 
 ## Citation
 

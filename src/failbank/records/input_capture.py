@@ -76,12 +76,6 @@ class InferCapture:
 
         client_cls.infer = captured_infer
 
-    def restore_class(self) -> None:
-        if self._original_infer is not None and self._patched_cls is not None:
-            self._patched_cls.infer = self._original_infer
-            self._original_infer = None
-            self._patched_cls = None
-
     def pop(self, infer_call_index: int) -> Optional[CapturedInfer]:
         with self._lock:
             return self._records.pop(infer_call_index, None)

@@ -40,7 +40,7 @@ done
 $PY -m failbank.pipeline.build_derived --records-root "$OUT/records" --folds 0
 $PY -m failbank.pipeline.merge_bank --round r1="$OUT/records" --out "$OUT/bank" --fold offset_0
 $PY -m failbank.pipeline.build_round_records --src-root "$OUT/bank" --dst-root "$OUT/bank_s1s2" \
-    --mode s1s2 --fold offset_0
+    --fold offset_0
 
 # 3. Stage 4: guarded update from the base checkpoint, then fold (CPU)
 if [ ! -s "$OUT/adapter/offset_0/metrics.json" ]; then
@@ -75,6 +75,6 @@ for arm in ("base", "updated"):
     md = r["metric_decomposition"]
     print(f"{arm:8s} held-out offset 0: success={r['successes']} official_cc={md['official_cc']} "
           f"policy_induced_cc={md['policy_induced_cc']}")
-print("One held-out episode is an illustration of the pipeline, not evidence about the method.")
+print("(single-episode demo: it shows the pipeline runs end to end, not how well the method works)")
 PY
 echo "MINIMAL_EXAMPLE_DONE"

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Stage 2b: the admission gate. Derived records of one fold -> the training record set.
 
-    failbank-build-round --src-root <bank> --dst-root <out> --mode s1s2 [--fold offset_0]
+    failbank-build-round --src-root <bank> --dst-root <out> [--fold offset_0]
 
 ``keep_record()`` drops records whose target would teach a bad action:
 
@@ -14,9 +14,8 @@
   keep   everything else; records from successful trajectories keep target = nominal and
          act as the anchor set.
 
-Triggered records keep their teacher target only if their stage is in the ``--mode`` set;
-otherwise the target is reset to the clipped nominal (an anchor). The paper's method uses
-``--mode s1s2`` (targets on S1_early and S2_mid).
+Triggered records keep their teacher target only on S1_early and S2_mid; on any other stage
+the target is reset to the clipped nominal (an anchor).
 
 The gate is applied to ``train.jsonl`` ONLY. ``validation.jsonl`` and the other fold files
 are copied unchanged, so the held-out set the update guard measures on still contains the
@@ -25,19 +24,12 @@ post-contact and emergency records that training never sees.
 ``blobs`` and ``episodes`` of the source are symlinked, not copied.
 """
 from __future__ import annotations
-import argparse, json, math, os, pathlib, random, shutil, collections
+import argparse, json, math, os, pathlib, shutil, collections
 
 MAX_T = 1.0
 DROP_STAGES = {"POST_crossing", "S3_emergency"}
-# Curriculum phases. The staged arm trains phase 1 then CONTINUES from its own folded
-# checkpoint on phase 2; the unstaged arm gets phase 2's data from the start, for the same
-# total number of steps. Same data, same budget, same starting point -- only the ORDER of
-# release differs, which is the only construction that actually tests "easy to hard".
-DELTA_SETS = {
-    "s1":     {"S1_early"},                       # curriculum phase 1
-    "s1s2":   {"S1_early", "S2_mid"},             # curriculum phase 2, and the static arm
-    "s1s2nr": {"S1_early", "S2_mid", "NO_RISK"},  # the old SE_R1 "static" set, kept for reference
-}
+# Stages whose triggered records keep the teacher target.
+DELTA_STAGES = {"S1_early", "S2_mid"}
 
 
 def clip_nominal(nom):
@@ -71,12 +63,10 @@ def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     ap.add_argument("--src-root", required=True)
     ap.add_argument("--dst-root", required=True)
-    ap.add_argument("--mode", required=True, choices=sorted(DELTA_SETS))
     ap.add_argument("--fold", default="offset_0")
-    ap.add_argument("--seed", type=int, default=17)
     a = ap.parse_args(argv)
     src, dst = pathlib.Path(a.src_root), pathlib.Path(a.dst_root)
-    delta_stages = DELTA_SETS[a.mode]
+    delta_stages = DELTA_STAGES
 
     if dst.exists():
         shutil.rmtree(dst)
@@ -132,13 +122,11 @@ def main(argv=None):
                         r["executed_action"] = new
                 fout.write(json.dumps(r) + "\n")
 
-    print(f"mode={a.mode}")
     print(f"  records kept={stats['kept']} dropped={stats['dropped']}  {dict(dropped_by_reason)}")
     print(f"  triggered: real delta={stats['delta_kept']} anchored(target=nominal)={stats['anchored']}")
     print(f"  delta by stage: {dict(delta_by_stage)}")
 
     # ---- verify ----
-    kept_fail_bad = 0
     delta_stage_seen = collections.Counter()
     anchor_from_failure = 0
     with (out_fold / "train.jsonl").open() as fh:

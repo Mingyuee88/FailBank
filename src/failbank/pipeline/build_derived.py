@@ -39,9 +39,9 @@ C1 wrapper; the teacher/outcome/quiet functions below are unchanged from the ori
 from __future__ import annotations
 import argparse, hashlib, json, math
 from collections import Counter
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Iterable
 
 import numpy as np
 
@@ -90,13 +90,6 @@ def find_candidate(s, name):
     for c in s.get("projection_candidates") or []:
         if c.get("name")==name: return c
     return None
-def nearest_executed_candidate(s):
-    ex=np.asarray(s["executed_action"],dtype=np.float32); best,bd=None,math.inf
-    for c in s.get("projection_candidates") or []:
-        d=float(np.linalg.norm(np.asarray(c["full_action"],dtype=np.float32)-ex))
-        if d<bd: best,bd=c,d
-    return best,bd
-
 def horizon_outcome(steps, t, h):
     win=steps[t:min(t+h,len(steps))]
     bars=[barrier(s) for s in win]; vb=[x for x in bars if math.isfinite(x)]
@@ -155,22 +148,6 @@ def teacher_quality(step, outcomes, aft, th):
             "progress_preservation":progress_preservation,"recovery":bool(aft["recovery"]),
             "uses_critic_prediction":False}
 
-def candidate_rows(base, step):
-    ex_c,ex_d=nearest_executed_candidate(step); rows=[]
-    for c in step.get("projection_candidates") or []:
-        m=finite(c.get("min_barrier")); st=str(c.get("status","")).lower()
-        formal_risk=(not math.isfinite(m) or m<0 or st in {"failed","infeasible","error"})
-        is_ex=(c is ex_c and ex_d<=1e-4)
-        rows.append({"candidate_record_id":stable_id(base["record_id"],c["name"]),
-            "parent_record_id":base["record_id"],"candidate_name":c["name"],
-            "candidate_action":c["full_action"],"candidate_translation":c.get("translation"),
-            "candidate_action_delta_norm":c.get("action_delta_norm"),
-            "formal_margin_target":(m if math.isfinite(m) else None),
-            "formal_risk_target":int(formal_risk),"executed_match":is_ex,
-            "realized_outcomes":(base["outcomes"] if is_ex else None),
-            "label_provenance":("formal_plus_executed_future" if is_ex else "formal_immediate_only")})
-    return rows
-
 def resolve_offset_success(episode_dir):
     ej=read_json(episode_dir/"episode.json")
     rr=(ej.get("result_ref") or {}); rp=rr.get("path")
@@ -183,7 +160,7 @@ def resolve_offset_success(episode_dir):
 def build_episode(episode_dir, offset, success, th):
     steps=read_jsonl(episode_dir/"raw_steps.jsonl")
     eid=episode_dir.name
-    records,cands=[],[]
+    records=[]
     for t,step in enumerate(steps):
         outcomes={f"H{h}":horizon_outcome(steps,t,h) for h in HORIZONS}
         aft=aftermath(steps,t,th)
@@ -196,8 +173,8 @@ def build_episode(episode_dir, offset, success, th):
              "nominal_action_chunk_ref":step["nominal_action_chunk_ref"],
              "formal_projection":step["formal_projection"],"outcomes":outcomes,"aftermath":aft,
              "eventual_success":success,"teacher":q,"quiet":not triggered(step)}
-        records.append(rec); cands.extend(candidate_rows(rec,step))
-    return records,cands
+        records.append(rec)
+    return records
 
 
 
@@ -233,7 +210,7 @@ def stage_for(lead):
 
 
 def build_all(root: Path, th: Thresholds):
-    all_rec, all_cand = [], []
+    all_rec = []
     kept = dropped = 0
     for ej in sorted(root.glob("episodes/*/*/episode.json")):
         ed = ej.parent
@@ -241,7 +218,7 @@ def build_all(root: Path, th: Thresholds):
             dropped += 1
             continue
         offset, success, _pc, _ = resolve_offset_success(ed)
-        recs, cands = build_episode(ed, offset, success, th)
+        recs = build_episode(ed, offset, success, th)
         fr = first_risk_step(ed)
         for r in recs:
             lead = None if fr is None else fr - int(r["step_index"])
@@ -249,12 +226,11 @@ def build_all(root: Path, th: Thresholds):
             r["curriculum_stage"] = stage_for(lead)
             r["risk_threshold"] = RISK_THRESHOLD
         all_rec.extend(recs)
-        all_cand.extend(cands)
         kept += 1
-    return all_rec, all_cand, kept, dropped
+    return all_rec, kept, dropped
 
 
-def write_folds(root: Path, all_rec, all_cand, folds=None):
+def write_folds(root: Path, all_rec, folds=None):
     offsets = sorted({r["offset"] for r in all_rec}, key=lambda x: int(x))
     held_out = offsets if not folds else [str(f) for f in folds]
     missing = sorted(set(held_out) - set(offsets), key=int)
@@ -265,13 +241,8 @@ def write_folds(root: Path, all_rec, all_cand, folds=None):
         fr_dir = derived / "folds" / f"offset_{ho}"
         train = [r for r in all_rec if r["offset"] != ho]
         val = [r for r in all_rec if r["offset"] == ho]
-        tids = {r["record_id"] for r in train}
         write_jsonl(fr_dir / "train.jsonl", train)
         write_jsonl(fr_dir / "validation.jsonl", val)
-        write_jsonl(fr_dir / "train_critic_candidates.jsonl",
-                    [c for c in all_cand if c["parent_record_id"] in tids])
-        write_jsonl(fr_dir / "validation_critic_candidates.jsonl",
-                    [c for c in all_cand if c["parent_record_id"] not in tids])
         fr_dir.mkdir(parents=True, exist_ok=True)
         (fr_dir / "manifest.json").write_text(json.dumps({
             "schema_version": SCHEMA, "heldout_offset": ho,
@@ -296,7 +267,7 @@ def main(argv=None):
     root = a.records_root.resolve()
     th = Thresholds()
 
-    all_rec, all_cand, kept, dropped = build_all(root, th)
+    all_rec, kept, dropped = build_all(root, th)
     if kept == 0:
         raise SystemExit(f"no COMPLETE episodes under {root}/episodes")
     trig = Counter(r["curriculum_stage"] for r in all_rec if r["triggered"])
@@ -312,7 +283,7 @@ def main(argv=None):
     if trig.get("S1_early", 0) == 0:
         print("WARNING: no triggered S1_early records -- this collection carries no trainable correction")
 
-    held_out = write_folds(root, all_rec, all_cand, a.folds)
+    held_out = write_folds(root, all_rec, a.folds)
     print(f"wrote {len(held_out)} held-out folds under {root}/derived/folds/")
     print("DERIVED_BUILT")
 

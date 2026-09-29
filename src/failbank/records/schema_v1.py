@@ -8,7 +8,7 @@ import json
 import math
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Mapping, Optional, Sequence
+from typing import Any, Mapping, Optional
 
 import numpy as np
 
@@ -59,10 +59,6 @@ def canonical_json_bytes(value: Any) -> bytes:
 
 def sha256_bytes(payload: bytes) -> str:
     return hashlib.sha256(payload).hexdigest()
-
-
-def sha256_json(value: Any) -> str:
-    return sha256_bytes(canonical_json_bytes(value))
 
 
 @dataclass(frozen=True)
@@ -121,22 +117,6 @@ class EpisodeRaw:
     steps_file: str = "raw_steps.jsonl"
     step_count: int = 0
     result_ref: Optional[dict[str, Any]] = None
-    metadata: dict[str, Any] = field(default_factory=dict)
-
-
-@dataclass(frozen=True)
-class DerivedRecord:
-    schema_version: str
-    record_id: str
-    episode_id: str
-    step_index: int
-    raw_step_sha256: str
-    teacher_candidate: Optional[str]
-    teacher_action: Optional[list[float]]
-    teacher_provenance: dict[str, Any]
-    outcome_window: dict[str, Any]
-    record_weight: Optional[float]
-    split: Optional[str]
     metadata: dict[str, Any] = field(default_factory=dict)
 
 

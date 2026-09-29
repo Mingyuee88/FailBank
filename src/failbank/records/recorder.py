@@ -8,7 +8,6 @@ valid COMPLETE marker and matching checksums.
 from __future__ import annotations
 
 import hashlib
-import json
 import os
 import shutil
 import tempfile
@@ -210,31 +209,3 @@ class EpisodeRecorder:
         except Exception as exc:
             self._disable(exc)
             return False
-
-    @classmethod
-    def validate_complete(cls, episode_dir: Path) -> dict[str, Any]:
-        """Fail-closed validation for offline dataset consumers."""
-        episode_dir = Path(episode_dir)
-        marker = episode_dir / "COMPLETE"
-        if not marker.is_file():
-            raise ValueError(f"Incomplete episode: {episode_dir}")
-
-        complete = json.loads(marker.read_text())
-        checksums = complete.get("checksums")
-        if not isinstance(checksums, dict):
-            raise ValueError(f"Malformed COMPLETE marker: {marker}")
-
-        for relative, expected in checksums.items():
-            path = episode_dir / relative
-            if not path.is_file():
-                raise ValueError(f"Missing finalized file: {path}")
-            if _file_sha256(path) != expected["sha256"]:
-                raise ValueError(f"Checksum mismatch: {path}")
-            if path.stat().st_size != int(expected["size_bytes"]):
-                raise ValueError(f"Size mismatch: {path}")
-
-        with (episode_dir / "raw_steps.jsonl").open("rb") as stream:
-            actual_steps = sum(1 for line in stream if line.strip())
-        if actual_steps != int(complete["step_count"]):
-            raise ValueError(f"Step-count mismatch: {episode_dir}")
-        return complete

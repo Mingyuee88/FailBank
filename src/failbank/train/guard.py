@@ -50,13 +50,12 @@ from failbank.train._openpi import upstream_train_module
 
 @at.typecheck
 def weighted_masked_first_action_mean(
-    chunked_loss, include_mask, per_record_weight, first_k=1
+    chunked_loss, include_mask, per_record_weight
 ):
-    """Weighted GLOBAL mean over the first ``first_k`` action-horizon steps.
+    """Weighted GLOBAL mean over the first action-horizon step.
 
     Training is jax.jit + FSDP (no pmap), so a plain global sum/sum is correct -- XLA
-    inserts the all-reduce for the replicated scalar output. ``first_k`` is static; the
-    paper uses 1 (first action only).
+    inserts the all-reduce for the replicated scalar output.
     """
     chunked_loss = jnp.asarray(chunked_loss)
     if chunked_loss.ndim < 2:
@@ -71,17 +70,9 @@ def weighted_masked_first_action_mean(
     include_mask = jnp.asarray(include_mask, dtype=chunked_loss.dtype)
     per_record_weight = jnp.asarray(per_record_weight, dtype=chunked_loss.dtype)
     record_mask = include_mask * per_record_weight
-    _k = int(first_k or 1)
-    if _k <= 1:
-        first_action_onehot = jax.nn.one_hot(
-            0, chunked_loss.shape[1], dtype=chunked_loss.dtype
-        )
-    else:
-        _k = min(_k, chunked_loss.shape[1])
-        first_action_onehot = jnp.concatenate([
-            jnp.ones((_k,), dtype=chunked_loss.dtype),
-            jnp.zeros((chunked_loss.shape[1] - _k,), dtype=chunked_loss.dtype),
-        ])
+    first_action_onehot = jax.nn.one_hot(
+        0, chunked_loss.shape[1], dtype=chunked_loss.dtype
+    )
     weighted_mask = record_mask[:, None] * first_action_onehot[None, :]
     numerator = jnp.sum(chunked_loss * weighted_mask)
     denominator = jnp.maximum(jnp.sum(weighted_mask), 1.0)
@@ -93,7 +84,6 @@ def weighted_train_step(
     rng: at.KeyArrayLike,
     state: training_utils.TrainState,
     batch: tuple,
-    first_k: int = 1,
 ) -> tuple[training_utils.TrainState, dict[str, at.Array]]:
     """OpenPI's train_step with the record-weighted objective; batch is a 4-tuple."""
     model = nnx.merge(state.model_def, state.params)
@@ -112,7 +102,7 @@ def weighted_train_step(
             rng, observation, actions, train=True
         )
         return weighted_masked_first_action_mean(
-            chunked_loss, include_mask, per_record_weight, first_k
+            chunked_loss, include_mask, per_record_weight
         )
 
     train_rng = jax.random.fold_in(rng, state.step)
@@ -178,8 +168,6 @@ def train_with_heldout_guard(
     patience=4,
     quiet_flow_loss_ratio_limit=1.10,
     quiet_action_drift_limit=0.05,
-    snapshot_callback=None,
-    first_k=1,
 ):
     """Train one held-out fold; retain the best guard-accepted state.
 
@@ -211,7 +199,7 @@ def train_with_heldout_guard(
         )
 
         ptrain_step = jax.jit(
-            functools.partial(weighted_train_step, config, first_k=first_k),
+            functools.partial(weighted_train_step, config),
             in_shardings=(
                 replicated_sharding,
                 train_state_sharding,
@@ -229,7 +217,7 @@ def train_with_heldout_guard(
                 rng, observation, actions, train=False
             )
             triggered_loss = weighted_masked_first_action_mean(
-                chunked_loss, include_mask, per_record_weight, first_k
+                chunked_loss, include_mask, per_record_weight
             )
             # Full-horizon flow loss on the held-out batch as a drift proxy.
             quiet_flow_loss = jnp.mean(chunked_loss)
@@ -404,19 +392,6 @@ def train_with_heldout_guard(
                 accepted, improved, consecutive_non_improvements, patience,
             )
 
-            if snapshot_callback is not None:
-                snapshot_callback(
-                    completed_step,
-                    train_state,
-                    {
-                        'triggered_loss': current_triggered_loss,
-                        'quiet_flow_ratio': quiet_flow_ratio,
-                        'quiet_action_drift': quiet_action_drift,
-                        'accepted': bool(accepted),
-                        'improved': bool(improved),
-                    },
-                )
-
             if consecutive_non_improvements >= patience:
                 stopped_early = True
                 logging.info(
@@ -444,6 +419,5 @@ def train_with_heldout_guard(
             'stopped_early': stopped_early,
             'quiet_flow_loss_ratio_limit': quiet_flow_loss_ratio_limit,
             'quiet_action_drift_limit': quiet_action_drift_limit,
-            'supervise_first_k': int(first_k),
         }
         return best_state, metrics

@@ -7,7 +7,7 @@ import io
 import os
 import tempfile
 from pathlib import Path
-from typing import Any, Mapping
+from typing import Any
 
 import numpy as np
 
@@ -55,37 +55,3 @@ def dump_npy(array: np.ndarray, blob_root: Path) -> dict[str, Any]:
         "shape": list(value.shape),
         "nbytes": int(value.nbytes),
     }
-
-
-def dump_npz(arrays: Mapping[str, np.ndarray], blob_root: Path) -> dict[str, Any]:
-    normalized = {
-        str(name): np.asarray(value)
-        for name, value in sorted(arrays.items())
-    }
-    buffer = io.BytesIO()
-    np.savez(buffer, **normalized)
-    payload = buffer.getvalue()
-    digest = hashlib.sha256(payload).hexdigest()
-    relative = Path(digest[:2]) / f"{digest}.npz"
-    _atomic_write_if_absent(blob_root / relative, payload)
-    return {
-        "kind": "npz",
-        "sha256": digest,
-        "path": relative.as_posix(),
-        "members": {
-            name: {
-                "dtype": value.dtype.str,
-                "shape": list(value.shape),
-                "nbytes": int(value.nbytes),
-            }
-            for name, value in normalized.items()
-        },
-    }
-
-
-def verify_blob(ref: Mapping[str, Any], blob_root: Path) -> None:
-    path = blob_root / str(ref["path"])
-    payload = path.read_bytes()
-    actual = hashlib.sha256(payload).hexdigest()
-    if actual != ref["sha256"]:
-        raise ValueError(f"Blob checksum mismatch: {path}")

@@ -80,7 +80,7 @@ class InterventionDecision:
 
 
 class Pi05CanonicalActionAdapter:
-    """Select one native Arena action and optionally add a physical arm delta."""
+    """Select the first native Arena action of a chunk, unchanged, with controller telemetry."""
 
     def __init__(self, contract: ArenaControllerActionContract) -> None:
         self.contract = contract
@@ -106,34 +106,13 @@ class Pi05CanonicalActionAdapter:
         effective = (clipped - input_min) * scale + output_min
         return effective, clipped != raw_arm
 
-    def _raw_arm_from_effective(self, effective: np.ndarray) -> np.ndarray:
-        input_min = np.asarray(self.contract.arm_input_min)
-        input_max = np.asarray(self.contract.arm_input_max)
-        output_min = np.asarray(self.contract.arm_output_min)
-        output_max = np.asarray(self.contract.arm_output_max)
-        target = np.clip(effective, output_min, output_max)
-        return (target - output_min) * (input_max - input_min) / (output_max - output_min) + input_min
-
-    def select_first(self, chunk, canonical_delta=None) -> InterventionDecision:
+    def select_first(self, chunk) -> InterventionDecision:
         native = self._validate_chunk(chunk)
         base = native[0].copy()
-        delta = np.zeros(7, dtype=float) if canonical_delta is None else np.asarray(canonical_delta, dtype=float)
-        if delta.shape != (7,) or not np.isfinite(delta).all():
-            raise ValueError("canonical correction must be finite 7-D")
-        if delta[6] != 0:
-            raise ValueError("gripper correction disabled until Arena format_action semantics are wrapped")
-
         effective, saturation = self._effective_arm(np.asarray(base[:6], dtype=float))
-        correction_applied = bool(np.any(delta[:6] != 0))
-        if correction_applied:
-            action = base.copy()
-            action[:6] = self._raw_arm_from_effective(effective + delta[:6])
-            effective, saturation = self._effective_arm(np.asarray(action[:6], dtype=float))
-            unchanged = False
-        else:
-            # Hard invariant: the Arena-native base action is forwarded bit-for-bit.
-            action = base.copy()
-            unchanged = bool(np.array_equal(action, base))
+        # Hard invariant: the Arena-native base action is forwarded bit-for-bit.
+        action = base.copy()
+        unchanged = bool(np.array_equal(action, base))
 
         return InterventionDecision(
             action=action,
@@ -143,14 +122,14 @@ class Pi05CanonicalActionAdapter:
             replan=True,
             discarded_actions=len(native) - 1,
             action_forwarded_unchanged=unchanged,
-            correction_applied=correction_applied,
+            correction_applied=False,
         )
 
 
 def adapt_first_action(adapter, chunk) -> tuple[np.ndarray, dict]:
     """Select first server action unchanged and expose Arena controller telemetry."""
     native = np.asarray(chunk)
-    decision = adapter.select_first(native, np.zeros(7, dtype=float))
+    decision = adapter.select_first(native)
     if not decision.replan or decision.discarded_actions != len(native) - 1:
         raise AssertionError("first-action + replan semantics violated")
     if not decision.action_forwarded_unchanged or not np.array_equal(decision.action, native[0]):

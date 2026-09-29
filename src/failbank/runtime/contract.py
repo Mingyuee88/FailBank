@@ -93,22 +93,9 @@ PI0_SIGNATURES = (
     "'action_time_mlp_out'",
     "'state_proj'",
 )
-# pi0-FAST is autoregressive and has NO action expert: pi0/pi05 carry a SECOND transformer
-# stack inside PaliGemma under "_1"-suffixed keys, and pi0-FAST has none of them (32 param
-# leaves against pi0's 50). Its own signatures are therefore the UNSUFFIXED stack plus the
-# enlarged embedder that holds the FAST action tokens. Presence alone is weak here -- pi0 and
-# pi05 also own the unsuffixed keys -- so the discrimination comes from the exclusion half:
-# all nine pi05/pi0 signatures were verified absent from the pi0-FAST _METADATA.
-PI0_FAST_SIGNATURES = (
-    "'final_norm', 'scale'",
-    "'pre_attention_norm', 'scale'",
-    "'embedder', 'input_embedding'",
-    "'encoder_norm', 'scale'",
-)
 ARCHITECTURE_SIGNATURES = {
     "pi05": PI05_SIGNATURES,
     "pi0": PI0_SIGNATURES,
-    "pi0_fast": PI0_FAST_SIGNATURES,
 }
 
 
@@ -123,7 +110,8 @@ def assert_architecture(train_config, metadata_path: str | Path) -> dict:
     model = train_config.model
     is_pi05 = bool(getattr(model, "pi05", False))
     model_type = model.model_type.value
-    family = "pi0_fast" if model_type == "pi0_fast" else ("pi05" if is_pi05 else "pi0")
+    assert model_type in ("pi0", "pi05"), f"unsupported model type {model_type!r} (pi0.5 and pi0 only)"
+    family = "pi05" if is_pi05 else "pi0"
     assert (model_type == "pi05") == is_pi05, (
         f"config {train_config.name} is internally inconsistent: "
         f"model_type={model_type} but pi05={is_pi05}"
@@ -132,12 +120,7 @@ def assert_architecture(train_config, metadata_path: str | Path) -> dict:
     tree = json.loads(Path(metadata_path).read_text())["tree_metadata"]
     joined = "\n".join(tree)
     expected = ARCHITECTURE_SIGNATURES[family]
-    # pi05 and pi0 keep their original two-way exclusion EXACTLY: pi0-FAST signatures are
-    # unsuffixed keys that pi0/pi05 also own, so folding them in would break those gates.
-    if family == "pi0_fast":
-        other = PI05_SIGNATURES + PI0_SIGNATURES
-    else:
-        other = ARCHITECTURE_SIGNATURES["pi0" if family == "pi05" else "pi05"]
+    other = ARCHITECTURE_SIGNATURES["pi0" if family == "pi05" else "pi05"]
 
     missing = [signature for signature in expected if signature not in joined]
     assert not missing, f"{family} checkpoint signature keys missing: {missing}"

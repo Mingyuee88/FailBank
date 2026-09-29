@@ -77,6 +77,9 @@
     .section-figure { margin: 0 auto; }
     .section-figure img { display: block; width: 100%; height: auto; }
     .section-figure.is-narrow { max-width: 620px; }
+    .section-figure.is-wide { max-width: 820px; }
+    .figure-caption.is-narrow { max-width: 620px; margin-left: auto; margin-right: auto; }
+    .figure-caption.is-wide { max-width: 820px; margin-left: auto; margin-right: auto; }
     .figure-caption { font-size: 0.95rem; line-height: 1.6; color: var(--text-secondary); margin-top: 1rem; text-align: justify; }
     .figure-caption b { color: var(--text-primary); }
     .block-gap { margin-top: 2.5rem; }
@@ -101,7 +104,6 @@
     .stages .stage-name { font-weight: 700; color: var(--text-primary); margin-bottom: 0.4rem; }
     .stages .stage-num { color: var(--fb); font-weight: 700; margin-right: 0.35em; }
     .contact-line { font-size: 1rem; color: var(--text-secondary); margin-top: 0.5rem; }
-    pre.shell { text-align: left; }
     /* Bulma's .hero is a flex column and .container has auto margins, so without this a wide
        table sizes the container to its own width and is clipped on phones */
     .hero > .container { width: 100%; }
@@ -282,7 +284,7 @@
         <img src="static/images/tradeoff.png" width="1600" height="1471"
              alt="Change in SR against change in policy-induced cost relative to each task's base policy, for FailBank and AEGIS on both backbones and both levels.">
       </figure>
-      <p class="figure-caption">
+      <p class="figure-caption is-narrow">
         <b>Success&ndash;cost trade-off relative to the base policy.</b> Circles and diamonds denote &pi;<sub>0.5</sub> and &pi;<sub>0</sub>, blue and orange denote FailBank and AEGIS, and shade indicates difficulty level.
         Upward movement means higher success, and leftward movement means lower policy-induced cost, so the shaded upper-left quadrant is better on both.
         FailBank places more points in this joint-improvement region, while AEGIS more often moves left but downward.
@@ -314,47 +316,14 @@
   <section class="section hero is-light">
     <div class="container is-max-desktop">
       <h2 class="title is-3 has-text-centered">Accumulated Self-Evolution Rounds</h2>
-      <figure class="section-figure is-narrow">
-        <img src="static/images/round_curves.png" width="933" height="768"
+      <figure class="section-figure is-wide">
+        <img src="static/images/round_curves.png" width="2023" height="900"
              alt="SR and policy-induced cost across five accumulated rounds as the bank grows from 3.7k to 22.7k records.">
       </figure>
-      <p class="figure-caption">
+      <p class="figure-caption is-wide">
         <b>Self-evolution across accumulated rounds on the Level 1 onion task.</b> The failure bank grows from 3.7k records at R1 to 22.7k at R5.
         SR peaks at R2, whereas CC<sub>policy</sub> reaches its minimum at R3. Later rounds fluctuate while remaining improved over the base policy on both axes.
       </p>
-    </div>
-  </section>
-
-  <!-- Code -->
-  <section class="section" id="code">
-    <div class="container is-max-desktop">
-      <h2 class="title is-3 has-text-centered">Code</h2>
-      <div class="content has-text-justified">
-        <p>The release contains all four stages, the held-out guard and the evaluation harness. It runs inside VLA-Arena's OpenPI environment with one small patch that adds a step seam to the evaluator. The core package reproduces FailBank without the AEGIS baseline or any VLM service. AEGIS is an optional extra. The CBF teacher is an interface, so other observe-only shields can be plugged in.</p>
-      </div>
-<pre class="shell"><code># VLA-Arena at the verified commit, plus the FailBank patch
-git clone https://github.com/PKU-Alignment/VLA-Arena.git && cd VLA-Arena
-git checkout 2ddcb00 && git apply ../FailBank/patches/vla-arena-2ddcb00.patch
-# inside VLA-Arena's OpenPI environment
-pip install -e ../FailBank
-export FAILBANK_CHECKPOINTS=/path/to/checkpoints   # Arena pi0.5 / pi0 finetunes
-bash ../FailBank/examples/minimal/run_minimal.sh   # collect, gate, one guarded update, evaluate</code></pre>
-    </div>
-  </section>
-
-  <!-- Limitations -->
-  <section class="section hero is-light">
-    <div class="container is-max-desktop">
-      <h2 class="title is-3 has-text-centered">Limitations</h2>
-      <div class="content has-text-justified">
-        <ul>
-          <li>The CBF teacher reads ground-truth hazard geometry from the simulator. It is a source of supervision in simulation, not a deployable shield.</li>
-          <li>Only the VLA-Arena static-obstacle suite is evaluated; the other safety suites do not fit the obstacle model for structural reasons.</li>
-          <li>Most of the success gain arrives in the first round; SR differences between adjacent rounds are not significant.</li>
-          <li>The quiet-anchor gain at &lambda;<sub>q</sub> = 0.2 did not survive retraining (ten-task &Delta;SR &minus;5.73, &Delta;CC<sub>policy</sub> +9.68).</li>
-          <li>Evaluation cells are reproducible only on a fixed GPU model; every comparison pins its cells to one machine.</li>
-        </ul>
-      </div>
     </div>
   </section>
 

@@ -9,8 +9,7 @@
 </p>
 
 <p align="center">
-  <!-- TODO: replace XXXX.XXXXX with the arXiv id -->
-  <a href="https://arxiv.org/abs/XXXX.XXXXX"><img src="https://img.shields.io/badge/arXiv-XXXX.XXXXX-AD1C18.svg?logo=arXiv" alt="arXiv"></a>
+  <a href="https://arxiv.org/abs/2609.39820"><img src="https://img.shields.io/badge/arXiv-2609.39820-AD1C18.svg?logo=arXiv" alt="arXiv"></a>
   <a href="https://mingyuee88.github.io/FailBank/"><img src="https://img.shields.io/badge/Website-Project_Page-2373A6.svg?logo=googlechrome&logoColor=white" alt="Project page"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-Apache_2.0-368773.svg" alt="License"></a>
 </p>
@@ -21,6 +20,7 @@
 
 ## 📢 Updates
 
+- **[Sep 30, 2026]** Paper released on [arXiv](https://arxiv.org/abs/2609.39820).
 - **[Sep 2026]** Code, VLA-Arena patch and project page released.
 
 ## 📖 Overview
@@ -116,11 +116,14 @@ More details (reproducibility, record format and naming): [NOTES.md](NOTES.md)
 ## Citation
 
 ```bibtex
-@article{cui2026failbank,
-  title   = {Learning from Runtime Feedback through Failure-Bank Self-Evolution for Vision-Language-Action Models},
-  author  = {Cui, Mingyue and Liu, Zheyuan and Zhu, Yihan and Zhang, Zheyuan and Jiang, Meng},
-  journal = {arXiv preprint},
-  year    = {2026}
+@misc{cui2026learningruntimefeedbackfailurebank,
+      title={Learning from Runtime Feedback through Failure-Bank Self-Evolution for Vision-Language-Action Models}, 
+      author={Mingyue Cui and Zheyuan Liu and Yihan Zhu and Zheyuan Zhang and Meng Jiang},
+      year={2026},
+      eprint={2609.39820},
+      archivePrefix={arXiv},
+      primaryClass={cs.RO},
+      url={https://arxiv.org/abs/2609.39820}, 
 }
 ```
 

@@ -21,7 +21,6 @@
 ## 📢 Updates
 
 - **[Sep 30, 2026]** Paper released on [arXiv](https://arxiv.org/abs/2609.39820).
-- **[Sep 2026]** Code, VLA-Arena patch and project page released.
 
 ## 📖 Overview
 
